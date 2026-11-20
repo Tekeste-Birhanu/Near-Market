@@ -64,6 +64,8 @@ Update editable seller profile fields. At least one supported field is required.
 
 `phoneNumber` may be `null` to clear it. The client cannot set Telegram identity, username, or `isAdmin`. The optional phone number belongs to the seller profile and is shared across the seller's listings; it is returned only on listing details.
 
+`displayName` must contain 1–80 characters after trimming. `phoneNumber` must contain 1–32 characters after trimming, or be `null` to clear it. Empty strings and unsupported fields, including Telegram identity and admin fields, return `400 VALIDATION_ERROR`.
+
 ## 3. Listings
 
 ### Shared listing representation
@@ -78,7 +80,6 @@ Update editable seller profile fields. At least one supported field is required.
   "condition": "USED",
   "rentalAddress": null,
   "priceAmount": "12500.00",
-  "isNegotiable": true,
   "status": "AVAILABLE",
   "images": [
     { "id": "uuid", "position": 1, "url": "/api/v1/listings/uuid/images/uuid" }
@@ -98,37 +99,38 @@ Update editable seller profile fields. At least one supported field is required.
 
 ### `GET /listings`
 
-Browse the selected feed. This route returns available listings only, newest first.
+Browse the selected feed. This route returns available listings only and defaults to newest first.
 
 | Query                  | Meaning                                                                                                                 |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `type`                 | Required: `ITEM` or `HOUSE_RENTAL`.                                                                                     |
-| `q`                    | Optional text search over title and description; rental address is also searchable for house rentals.                   |
+| `sort`                 | Optional `NEWEST` or `OLDEST`; defaults to `NEWEST`. |
+| `q`                    | Optional case-insensitive search over title and description; rental address is also searchable for house rentals. The value is trimmed and limited to 100 characters. |
 | `category`             | Optional item category: `ELECTRONICS`, `CLOTHING`, or `OTHER`; only valid with `type=ITEM`.                             |
 | `condition`            | Optional `NEW` or `USED`; only valid with `type=ITEM`.                                                                  |
-| `minPrice`, `maxPrice` | Optional inclusive ETB price bounds. Contact-for-price listings have no numeric price and do not match a numeric bound. |
-| `limit`                | Optional page size, default 20, maximum 50.                                                                             |
+| `minPrice`, `maxPrice` | Optional inclusive ETB price bounds with up to two decimal places. Contact-for-price listings have no numeric price and do not match a numeric bound. |
+| `limit`                | Optional page size from 1 to 50, default 20.                                                                            |
 | `cursor`               | Optional opaque cursor from the previous response.                                                                      |
 
-**Success `200`:** `{ "items": [<listing-summary>], "nextCursor": "..." }`; `nextCursor` is `null` when there are no more results. Invalid combinations or bounds return `400 VALIDATION_ERROR`.
+**Success `200`:** `{ "items": [<listing-summary>], "nextCursor": "..." }`; each feed summary includes the first listing image, seller display name and Telegram username, and never the seller phone number. Results are ordered by `createdAt` and ID in the selected direction for stable pagination. `nextCursor` is opaque and is `null` when there are no more results. Invalid combinations, unknown query fields, or bounds return `400 VALIDATION_ERROR`.
 
 ### `GET /listings/{listingId}`
 
-Return listing details, including seller profile and the seller's optional profile phone number, for an available listing. The listing owner may also retrieve their retained listing regardless of availability so they can manage it. A different user opening a sold or unavailable listing through an old link receives `410 LISTING_UNAVAILABLE`; a deleted or unknown listing returns `404 NOT_FOUND`.
+Return listing details, all ordered images, and seller profile including the seller's optional profile phone number for an available listing. The listing owner and an authorized admin may also retrieve retained listings regardless of availability so they can manage or review them. A different user opening a sold or unavailable listing through an old link receives `410 LISTING_UNAVAILABLE`; a deleted or unknown listing returns `404 NOT_FOUND`.
 
 ### `GET /listings/{listingId}/images/{imageId}`
 
-Return the requested image bytes with the stored verified image media type. The image must belong to the specified listing. Public users can retrieve images for available listings; the listing owner and an authorized admin can also retrieve images for retained sold or unavailable listings. Return `404` if either ID is invalid or the listing is not visible to the caller.
+Return the requested image bytes with the stored verified raster image media type (`image/webp`) and `X-Content-Type-Options: nosniff`. The image must belong to the specified listing. Public users can retrieve images for available listings; the listing owner and an authorized admin can also retrieve images for retained sold or unavailable listings. Return `404` if either ID is invalid or the listing is not visible to the caller.
 
 ### `POST /listings`
 
-Create an item or house rental. Requires authentication and a Telegram username. Submit `multipart/form-data` with listing fields and one to three `images` files (each at most 5 MB before processing). The server validates and compresses images and writes the listing and image rows in one transaction. On success, return `201` and the created listing details.
+Create an item or house rental. Requires authentication and a current Telegram username from the stored user record. Submit `multipart/form-data` with listing fields and one to three `images` files (each at most 5 MB before processing). Accept JPEG, PNG, and non-animated WebP inputs up to 25 megapixels; do not trust the filename or client MIME header. The server applies orientation, resizes images to fit within 1600 × 1600 pixels, converts them to WebP, and writes the Available listing and all image rows in one database transaction. Unsupported fields, invalid images, or invalid type-specific combinations return `400 VALIDATION_ERROR` (invalid image bytes use `400 INVALID_IMAGE`); files over 5 MB return `413 PAYLOAD_TOO_LARGE`. A missing username returns `403 USERNAME_REQUIRED`. On success, return `201` and the created listing details.
 
 Item fields:
 
 ```text
 type=ITEM
-title, description, category, condition, priceAmount, isNegotiable
+title, description, category, condition, priceAmount
 images=<file, repeated 1-3 times>
 ```
 
@@ -136,11 +138,11 @@ House rental fields:
 
 ```text
 type=HOUSE_RENTAL
-title, description, rentalAddress, priceAmount, isNegotiable
+description, rentalAddress, priceAmount
 images=<file, repeated 1-3 times>
 ```
 
-Use an empty `priceAmount` to represent Contact for price; in that case `isNegotiable` must be `false`. Otherwise price must be zero or greater. New listings are created with `status=AVAILABLE`; clients cannot choose another initial status. On success, return `201` and the created listing details.
+House rental clients do not send a title. The server stores the required rental address in the response's `title` field for compatibility; clients display the localized House rental label and the address separately. Use an empty `priceAmount` to represent Contact for price. Otherwise price must be zero or greater. New listings are created with `status=AVAILABLE`; clients cannot choose another initial status. On success, return `201` and the created listing details.
 
 ### `GET /me/listings`
 
@@ -148,7 +150,7 @@ Return the authenticated seller's listings, including sold and unavailable listi
 
 ### `PATCH /listings/{listingId}`
 
-Update a listing owned by the authenticated user. Accept `multipart/form-data` with editable listing fields. The listing type cannot be changed. If no `images` files are sent, keep existing images; if images are sent, replace the complete image set with one to three new files. Validate the full resulting listing before saving. Return `200` and the updated listing. Return `403 FORBIDDEN` for a listing owned by someone else.
+Update a listing owned by the authenticated user. Accept `multipart/form-data` with editable listing fields. Items require `title`; house rentals omit it and the server updates its internal compatibility value from `rentalAddress`. The listing type cannot be changed. If no `images` files are sent, keep existing images; if images are sent, replace the complete image set with one to three new files. Validate the full resulting listing before saving. Return `200` and the updated listing. Return `403 FORBIDDEN` for a listing owned by someone else.
 
 ### `PATCH /listings/{listingId}/status`
 
@@ -172,9 +174,11 @@ Return the seller's public profile: `{ "id", "displayName", "telegramUsername" }
 
 ### `GET /sellers/{sellerId}/listings`
 
-Return that seller's available listings, newest first, using the standard `items` and `nextCursor` response. Supports `type`, `limit`, and `cursor`. Listing summaries omit the seller's phone number.
+Return that seller's available listings, newest first, using the standard `items` and `nextCursor` response. Optional `type` limits results to `ITEM` or `HOUSE_RENTAL`; if omitted, include both types. `limit` and `cursor` follow the feed rules. Listing summaries omit the seller's phone number.
 
-## 5. Admin API
+## 5. Admin API (planned in M3)
+
+The following routes are the approved contract for the Admin Mini App and are not implemented yet. Track delivery in `TASKS.md` T20–T23.
 
 All `/admin` routes require a valid authenticated session and stored admin permission. A client-supplied role never grants access.
 
@@ -206,7 +210,7 @@ Permanently remove a listing and its images. After the database deletion succeed
 
 ## 6. Telegram bot integration
 
-Telegraf handles incoming bot updates for the marketplace bot and admin bot in the shared server process. The marketplace bot's `/start` and `/app` commands return an inline button that opens the configured Marketplace Mini App URL. Bot updates are not Mini App REST endpoints. Bot tokens and Mini App URLs are server-side configuration. The marketplace bot uses Telegraf's default long polling when explicitly enabled for development; production webhook or polling configuration is deferred with hosting in `ARCHITECTURE.md`.
+The current implementation uses Telegraf for the marketplace bot; the separate admin bot is planned in M3 (T20–T23). The marketplace bot's `/start` and `/app` commands return an inline button that opens the configured Marketplace Mini App URL. Bot updates are not Mini App REST endpoints. Bot tokens and Mini App URLs are server-side configuration. The marketplace bot uses Telegraf's default long polling when explicitly enabled for development; production webhook or polling configuration is deferred with hosting in `ARCHITECTURE.md`.
 
 The backend validates Telegram Mini App `initData` in `POST /auth/session`; Telegraf bot context is not a substitute for Mini App authentication. Admin access is based on the authenticated user's server-side `isAdmin` value.
 
@@ -234,7 +238,6 @@ Errors use one JSON shape:
 | `404`       | Resource does not exist or is not visible to this caller.                                 |
 | `410`       | Listing exists but is sold or unavailable to public view.                                 |
 | `413`       | Request or image exceeds the allowed upload size.                                         |
-| `415`       | Unsupported or invalid image media type.                                                  |
 | `429`       | Request rate limit exceeded; response includes `Retry-After` and rate limit headers.       |
 | `503`       | Authentication cannot run because required server configuration is missing.                |
 | `500`       | Unexpected server error; return a generic message and log details safely.                 |

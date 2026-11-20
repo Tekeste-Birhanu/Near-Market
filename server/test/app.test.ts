@@ -50,7 +50,7 @@ describe("API app", () => {
 describe("loadConfig", () => {
   it("uses safe defaults", () => {
     expect(loadConfig({})).toEqual({
-      port: 3000,
+      port: 3001,
       rateLimitWindowMs: 60_000,
       rateLimitMax: 100,
       marketplaceBotEnabled: false,

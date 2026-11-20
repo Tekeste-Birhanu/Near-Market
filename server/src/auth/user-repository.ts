@@ -11,6 +11,8 @@ export interface AuthenticatedUser {
 
 export interface AuthUserRepository {
   upsertTelegramUser(user: TelegramMiniAppUser): Promise<AuthenticatedUser>;
+  getUserById(userId: string): Promise<AuthenticatedUser | null>;
+  updateProfile(userId: string, profile: { displayName?: string; phoneNumber?: string | null }): Promise<AuthenticatedUser | null>;
 }
 
 export function createPrismaUserRepository(prisma: PrismaClient): AuthUserRepository {
@@ -36,6 +38,24 @@ export function createPrismaUserRepository(prisma: PrismaClient): AuthUserReposi
       });
 
       return user;
+    },
+    async getUserById(userId) {
+      return prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, telegramUsername: true, displayName: true, phoneNumber: true, isAdmin: true },
+      });
+    },
+    async updateProfile(userId, profile) {
+      try {
+        return await prisma.user.update({
+          where: { id: userId },
+          data: profile,
+          select: { id: true, telegramUsername: true, displayName: true, phoneNumber: true, isAdmin: true },
+        });
+      } catch (error) {
+        if (typeof error === "object" && error !== null && "code" in error && error.code === "P2025") return null;
+        throw error;
+      }
     },
   };
 }

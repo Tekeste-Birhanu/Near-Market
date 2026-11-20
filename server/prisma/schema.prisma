@@ -61,7 +61,6 @@ model Listing {
   itemCondition      ItemCondition? @map("item_condition")
   rentalAddress      String?        @map("rental_address") @db.Text
   priceAmount        Decimal?       @map("price_amount") @db.Decimal(12, 2)
-  isNegotiable       Boolean        @default(false) @map("is_negotiable")
   availabilityStatus ListingStatus  @default(AVAILABLE) @map("availability_status")
   createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)

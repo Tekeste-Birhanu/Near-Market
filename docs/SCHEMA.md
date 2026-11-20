@@ -5,7 +5,7 @@
 - **Database:** PostgreSQL, accessed by the server through Prisma ORM 7.
 - **Normalization:** Keep the core data in third normal form. Store users, listings, and listing images as separate entities. Use PostgreSQL enum types for fixed values that have no additional attributes.
 - **Source of truth:** PostgreSQL stores users, listings, and image data. Admin dashboard totals are calculated from user and listing records; there is no separate metrics table.
-- **Images:** Store validated, compressed image bytes in PostgreSQL `bytea`. Accept one to three images per listing, up to 5 MB per uploaded image.
+- **Images:** Store validated, compressed WebP image bytes in PostgreSQL `bytea`. Accept one to three JPEG, PNG, or non-animated WebP uploads per listing, up to 5 MB and 25 megapixels per uploaded image; orient and resize to fit 1600 × 1600 before storage.
 - **Registration:** Create or update a user record from validated Telegram identity data when the user opens the Mini App. Users can browse without a username, but must have a Telegram username to post.
 
 ## 2. Entities
@@ -38,13 +38,12 @@
 | `id` | UUID | Yes | Primary key. |
 | `seller_id` | UUID | Yes | Foreign key to `users.id`. |
 | `listing_type` | `listing_type` enum | Yes | `ITEM` or `HOUSE_RENTAL`; drives the separate feed and form. |
-| `title` | TEXT | Yes | Item name or rental title. |
+| `title` | TEXT | Yes | Seller-entered item name. For house rentals, the server stores the required rental address here as an internal compatibility/search value; rental clients do not enter or display it as a title. |
 | `description` | TEXT | Yes | Seller-entered text, kept in the language supplied. |
 | `item_category` | `item_category` enum | No | `ELECTRONICS`, `CLOTHING`, or `OTHER`; required for items and empty for house rentals. |
 | `item_condition` | `item_condition` enum | No | `NEW` or `USED`; required for items and empty for house rentals. |
 | `rental_address` | TEXT | No | Seller-entered address; required for house rentals and empty for items. |
 | `price_amount` | NUMERIC(12,2) | No | ETB amount. `NULL` means Contact for price; otherwise must be zero or greater. |
-| `is_negotiable` | BOOLEAN | Yes | Defaults to `false`; must be `false` when `price_amount` is `NULL`. |
 | `availability_status` | `listing_status` enum | Yes | `AVAILABLE`, `SOLD`, or `UNAVAILABLE`, subject to listing-type rules below. |
 | `created_at` | TIMESTAMPTZ | Yes | Set by the server when posted. |
 | `updated_at` | TIMESTAMPTZ | Yes | Updated when the seller changes listing data or availability. |
@@ -108,7 +107,7 @@ Use PostgreSQL constraints for uniqueness, foreign keys, allowed values, and fie
 | Data / query pattern | Index or optimization | Reason |
 |---|---|---|
 | Telegram identity lookup | Unique index on `users.telegram_user_id` | Resolve the authenticated Telegram user. |
-| Public listing feed | Index on `(listing_type, availability_status, created_at DESC)` | Fetch newest available listings for the selected Items or House rentals page. |
+| Public listing feed | Index on `(listing_type, availability_status, created_at DESC)` | Fetch newest available listings for the selected Items or House rentals tab. |
 | Seller's listings | Index on `(seller_id, created_at DESC)` | Load My listings and seller profile listings. |
 | Image order | Unique index on `(listing_id, position)` | Retrieve each listing's images in display order and limit each listing to three. |
 
@@ -137,7 +136,7 @@ Item listing:        listing_type=ITEM, item_category=ELECTRONICS,
                      item_condition=USED, rental_address=NULL
 House rental:        listing_type=HOUSE_RENTAL, item_category=NULL,
                      item_condition=NULL, rental_address=<seller-entered address>
-Contact for price:   price_amount=NULL, is_negotiable=false
+Contact for price:   price_amount=NULL
 ```
 
 ## 9. Open schema questions

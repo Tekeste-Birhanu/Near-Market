@@ -10,6 +10,17 @@ export interface TelegramMiniAppUser {
   displayName: string;
 }
 
+export type TelegramInitDataFailureReason =
+  | "MALFORMED_DATA"
+  | "INVALID_SIGNATURE"
+  | "INVALID_AUTH_DATE"
+  | "EXPIRED_AUTH_DATE"
+  | "INVALID_USER";
+
+export type TelegramInitDataValidation =
+  | { user: TelegramMiniAppUser }
+  | { reason: TelegramInitDataFailureReason; ageSeconds?: number };
+
 function safeHexEqual(left: string, right: string): boolean {
   if (!/^[a-f\d]{64}$/i.test(left) || !/^[a-f\d]{64}$/i.test(right)) return false;
   return timingSafeEqual(Buffer.from(left, "hex"), Buffer.from(right, "hex"));
@@ -46,23 +57,25 @@ function validUserJson(value: string): TelegramMiniAppUser | undefined {
   };
 }
 
-export function validateTelegramInitData(
+export function validateTelegramInitDataDetailed(
   rawInitData: string,
   botTokens: readonly string[],
   nowMs = Date.now(),
-): TelegramMiniAppUser | undefined {
+): TelegramInitDataValidation {
   if (!rawInitData || rawInitData.length > MAX_INIT_DATA_LENGTH || botTokens.length === 0) {
-    return undefined;
+    return { reason: "MALFORMED_DATA" };
   }
 
   const params = new URLSearchParams(rawInitData);
   const entries = [...params.entries()];
   if (entries.length === 0 || new Set(entries.map(([key]) => key)).size !== entries.length) {
-    return undefined;
+    return { reason: "MALFORMED_DATA" };
   }
 
   const receivedHash = params.get("hash");
-  if (!receivedHash || !/^[a-f\d]{64}$/i.test(receivedHash)) return undefined;
+  if (!receivedHash || !/^[a-f\d]{64}$/i.test(receivedHash)) {
+    return { reason: "MALFORMED_DATA" };
+  }
 
   const dataCheckString = entries
     .filter(([key]) => key !== "hash")
@@ -72,25 +85,37 @@ export function validateTelegramInitData(
 
   let signatureValid = false;
   for (const botToken of botTokens) {
-    const secretKey = createHmac("sha256", botToken).update("WebAppData").digest();
+    const secretKey = createHmac("sha256", "WebAppData").update(botToken).digest();
     const calculatedHash = createHmac("sha256", secretKey).update(dataCheckString).digest("hex");
     signatureValid = safeHexEqual(calculatedHash, receivedHash) || signatureValid;
   }
-  if (!signatureValid) return undefined;
+  if (!signatureValid) return { reason: "INVALID_SIGNATURE" };
 
   const authDateRaw = params.get("auth_date");
-  if (!authDateRaw || !/^\d+$/.test(authDateRaw)) return undefined;
+  if (!authDateRaw || !/^\d+$/.test(authDateRaw)) {
+    return { reason: "INVALID_AUTH_DATE" };
+  }
   const authDate = Number(authDateRaw);
   const nowSeconds = Math.floor(nowMs / 1000);
-  if (
-    !Number.isSafeInteger(authDate) ||
-    authDate > nowSeconds + FUTURE_CLOCK_SKEW_SECONDS ||
-    nowSeconds - authDate > TELEGRAM_INIT_DATA_MAX_AGE_SECONDS
-  ) {
-    return undefined;
+  if (!Number.isSafeInteger(authDate) || authDate > nowSeconds + FUTURE_CLOCK_SKEW_SECONDS) {
+    return { reason: "INVALID_AUTH_DATE" };
+  }
+  const ageSeconds = nowSeconds - authDate;
+  if (ageSeconds > TELEGRAM_INIT_DATA_MAX_AGE_SECONDS) {
+    return { reason: "EXPIRED_AUTH_DATE", ageSeconds };
   }
 
   const userJson = params.get("user");
-  if (!userJson) return undefined;
-  return validUserJson(userJson);
+  const user = userJson ? validUserJson(userJson) : undefined;
+  if (!user) return { reason: "INVALID_USER", ageSeconds };
+  return { user };
+}
+
+export function validateTelegramInitData(
+  rawInitData: string,
+  botTokens: readonly string[],
+  nowMs = Date.now(),
+): TelegramMiniAppUser | undefined {
+  const result = validateTelegramInitDataDetailed(rawInitData, botTokens, nowMs);
+  return "user" in result ? result.user : undefined;
 }

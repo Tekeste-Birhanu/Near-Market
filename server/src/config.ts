@@ -40,7 +40,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   }
 
   const config: AppConfig = {
-    port: positiveInteger(env.PORT, 3000, "PORT", 65_535),
+    port: positiveInteger(env.PORT, 3001, "PORT", 65_535),
     rateLimitWindowMs: positiveInteger(env.RATE_LIMIT_WINDOW_MS, 60_000, "RATE_LIMIT_WINDOW_MS"),
     rateLimitMax: positiveInteger(env.RATE_LIMIT_MAX, 100, "RATE_LIMIT_MAX"),
     marketplaceBotEnabled: marketplaceBotEnabledValue === "true",

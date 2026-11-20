@@ -1,11 +1,20 @@
 import express, { type ErrorRequestHandler } from "express";
 import type { AppConfig } from "./config.ts";
 import { createAuthRouter, type AuthSessionDependencies } from "./auth/session-route.ts";
+import { createProfileRouter } from "./auth/profile-route.ts";
+import { createListingFeedRouter, type ListingFeedRepository } from "./listings/feed-route.ts";
+import { createListingReadRouter, type ListingReadRepository } from "./listings/read-route.ts";
+import { createListingCreateRouter, type ListingCreateRepository } from "./listings/create-route.ts";
+import { createListingLifecycleRouter, type ListingLifecycleRepository } from "./listings/lifecycle-route.ts";
 import { requireSession } from "./auth/session-token.ts";
 import { createRateLimiter } from "./rate-limit.ts";
 
 export interface AppDependencies {
   auth?: AuthSessionDependencies;
+  listingFeedRepository?: ListingFeedRepository;
+  listingReadRepository?: ListingReadRepository;
+  listingCreateRepository?: ListingCreateRepository;
+  listingLifecycleRepository?: ListingLifecycleRepository;
 }
 
 export function createApp(
@@ -17,7 +26,12 @@ export function createApp(
   app.use(express.json({ limit: "1mb" }));
   app.use(createRateLimiter(config.rateLimitMax, config.rateLimitWindowMs));
   app.use("/api/v1/auth", createAuthRouter(dependencies.auth));
-  app.use("/api/v1", requireSession(dependencies.auth?.sessionSecret));
+  app.use("/api/v1", requireSession(dependencies.auth?.sessionSecret, dependencies.auth?.now));
+  app.use("/api/v1", createProfileRouter(dependencies.auth?.userRepository));
+  app.use("/api/v1", createListingFeedRouter(dependencies.listingFeedRepository));
+  app.use("/api/v1", createListingReadRouter(dependencies.listingReadRepository));
+  app.use("/api/v1", createListingCreateRouter(dependencies.listingCreateRepository));
+  app.use("/api/v1", createListingLifecycleRouter(dependencies.listingLifecycleRepository));
 
   app.get("/health", (_req, res) => {
     res.status(200).json({ status: "ok" });

@@ -3,10 +3,10 @@ import { App } from "../App";
 import { describe, expect, it } from "vitest";
 
 describe("Near Market client", () => {
-  it("renders the initial app screen", () => {
+  it("renders the local Listings design preview", async () => {
     render(<App />);
 
     expect(screen.getByRole("heading", { name: "Near Market", level: 1 })).toBeInTheDocument();
-    expect(screen.getByText("Buy and sell directly on Telegram.")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Near Market" })).toBeInTheDocument();
   });
 });

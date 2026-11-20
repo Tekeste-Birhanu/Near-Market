@@ -95,7 +95,6 @@ databaseSuite("PostgreSQL schema constraints", () => {
     category?: string | null;
     condition?: string | null;
     price?: string | null;
-    negotiable?: boolean;
     status?: string;
   } = {}) {
     const id = randomUUID();
@@ -104,15 +103,14 @@ databaseSuite("PostgreSQL schema constraints", () => {
       category: overrides.category === undefined ? "OTHER" : overrides.category,
       condition: overrides.condition === undefined ? "USED" : overrides.condition,
       price: overrides.price === undefined ? "10.00" : overrides.price,
-      negotiable: overrides.negotiable ?? false,
       status: overrides.status ?? "AVAILABLE",
     };
     await client.query(
       `INSERT INTO listings
         (id, seller_id, listing_type, title, description, item_category, item_condition,
-         price_amount, is_negotiable, availability_status)
-       VALUES ($1, $2, 'ITEM', 'Test item', 'Test description', $3, $4, $5, $6, $7)`,
-      [id, values.seller, values.category, values.condition, values.price, values.negotiable, values.status],
+         price_amount, availability_status)
+       VALUES ($1, $2, 'ITEM', 'Test item', 'Test description', $3, $4, $5, $6)`,
+      [id, values.seller, values.category, values.condition, values.price, values.status],
     );
     return id;
   }
@@ -161,14 +159,6 @@ databaseSuite("PostgreSQL schema constraints", () => {
       [randomUUID(), sellerId],
       "23514",
     );
-    await expectSqlState(
-      `INSERT INTO listings
-        (id, seller_id, listing_type, title, description, item_category, item_condition, is_negotiable)
-       VALUES ($1, $2, 'ITEM', 'Test item', 'Description', 'OTHER', 'USED', true)`,
-      [randomUUID(), sellerId],
-      "23514",
-    );
-
     const itemId = await insertItem({ status: "SOLD" });
     const rentalId = randomUUID();
     await client.query(

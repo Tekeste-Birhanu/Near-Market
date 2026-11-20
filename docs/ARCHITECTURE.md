@@ -8,12 +8,15 @@
 - **Deployment target:** Undecided.
 - **Key constraints:** The marketplace bot and separate admin bot run through the same Node.js backend service. Telegram identity data must be validated by the backend before use.
 
+The current code implements the marketplace Mini App, marketplace bot, and shared API. The Admin Mini App and admin bot are planned work tracked under M3 (T20–T23); the architecture and contracts below describe their approved target design.
+
 ## 2. Technology stack
 
 | Area | Choice | Notes |
 |---|---|---|
 | Frontend | React + TypeScript + Vite + Tailwind CSS | Marketplace Mini App and Admin Mini App UIs; Tailwind CSS is integrated through its Vite plugin. |
 | Backend | Node.js + TypeScript + Express | One shared service provides the REST API and handles both bots. |
+| Listing uploads | Multer + Sharp | Parse bounded multipart uploads, validate raster image content, normalize orientation, resize, and convert to WebP before storing in PostgreSQL. |
 | Package manager | npm workspaces | Manage the `client/` and `server/` packages from the repository root. |
 | Telegram bot framework | Telegraf | Separate bot instances for the marketplace bot and admin bot run in the shared backend. |
 | Database access | Prisma ORM 7 | Typed database access and schema migrations for PostgreSQL. |
@@ -42,7 +45,7 @@ The project is kept in one repository with `client/`, `server/`, and `docs/` fol
 |---|---|---|
 | Marketplace Mini App | Browse, search, filter, post, and manage listings; show seller profiles and contact options. | React + TypeScript; accesses data through the shared API. |
 | Marketplace bot | Open the Marketplace Mini App and support Telegram-related interactions. | Telegraf instance using the Telegram Bot API; runs in the shared Node.js backend service. |
-| Admin Mini App and bot | Provide the same Items, House rentals, and Profile pages as the Marketplace Mini App, plus an admin Dashboard; allow admins to remove listings. | Separate Telegraf instance using the Telegram Bot API; the admin bot launches the Admin Mini App. Both use the shared Node.js backend service. |
+| Admin Mini App and bot | Provide the same Listings page (with Items and House rentals tabs), Post, and Profile pages as the Marketplace Mini App, plus an admin Dashboard; allow admins to remove listings. | Separate Telegraf instance using the Telegram Bot API; the admin bot launches the Admin Mini App. Both use the shared Node.js backend service. |
 | Backend service | Provide the REST API, validate Telegram identity, enforce ownership and admin permissions, validate listing data and images, handle both bots, and coordinate persistence. | Node.js + TypeScript + Express; accesses PostgreSQL through Prisma ORM 7. |
 | PostgreSQL | Persist users, listings, and listing image bytes; provide data for admin dashboard totals. | Backend is the only trusted writer. Dashboard totals are derived from stored user and listing data. |
 

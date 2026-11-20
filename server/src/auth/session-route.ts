@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { issueAccessToken } from "./session-token.ts";
-import { validateTelegramInitData } from "./telegram-init-data.ts";
+import { validateTelegramInitDataDetailed } from "./telegram-init-data.ts";
 import type { AuthUserRepository } from "./user-repository.ts";
 
 export interface AuthSessionDependencies {
@@ -41,12 +41,17 @@ export function createAuthRouter(dependencies: AuthSessionDependencies = {}) {
     }
 
     const now = dependencies.now?.() ?? Date.now();
-    const telegramUser = validateTelegramInitData(body.initData, dependencies.botTokens, now);
-    if (!telegramUser) {
+    const validation = validateTelegramInitDataDetailed(body.initData, dependencies.botTokens, now);
+    if (!("user" in validation)) {
+      console.warn("Telegram Mini App authentication rejected", {
+        reason: validation.reason,
+        ...(validation.ageSeconds === undefined ? {} : { ageSeconds: validation.ageSeconds }),
+      });
       sendError(res, 401, "UNAUTHORIZED", "Telegram authentication data is invalid or expired.");
       return;
     }
 
+    const telegramUser = validation.user;
     const user = await dependencies.userRepository.upsertTelegramUser(telegramUser);
     const session = issueAccessToken(user.id, dependencies.sessionSecret, now);
     res.status(200).json({

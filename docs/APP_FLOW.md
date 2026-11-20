@@ -4,6 +4,8 @@
 
 Describe how buyers, sellers, and admins move through Near Market. Product requirements are in `PRD.md`; visual guidance is in `DESIGN.md`.
 
+Admin journeys and screens below describe the planned M3 scope (T20–T23); the current implementation includes the marketplace Mini App and marketplace bot only.
+
 ## 2. Navigation map
 
 ```text
@@ -11,7 +13,7 @@ Telegram bot
   ├── Marketplace bot → Mini App
   │   ├── Listings → Items (default) / House rentals → listing details → seller profile / contact seller
   │   ├── Post → choose Item or House rental → matching form → publish
-  │   └── Profile → My listings / Settings → edit profile
+  │   └── Profile → profile card + My listings (Items / Rentals) → gear → Settings → edit profile
   └── Admin bot → Admin Mini App
       ├── Listings → Items / House rentals → listing details
       ├── Post → choose Item or House rental → matching form
@@ -19,7 +21,7 @@ Telegram bot
       └── Dashboard (default)
 ```
 
-The marketplace Mini App opens on Listings with Items selected. The Admin Mini App has the same navigation plus Dashboard and opens on Dashboard. The interface defaults to English; users can switch to Amharic and use a Light/Dark toggle in Profile > Settings. Theme follows Telegram until the user changes the toggle; the selected preference is stored locally. Users can browse before setting up to post.
+The marketplace Mini App opens on Listings with Items selected. The Admin Mini App has the same navigation plus Dashboard and opens on Dashboard. Show Near Market branding on Listings only. Every page places the same English/Amharic and Light/Dark toggles at the top right; other pages use their own page titles. The interface defaults to English and Dark mode; save both selections locally. The app does not follow Telegram's theme. Users can browse before setting up to post.
 
 ## 3. Main journeys
 
@@ -30,7 +32,7 @@ The marketplace Mini App opens on Listings with Items selected. The Admin Mini A
 - **Preconditions / access:** No seller profile setup is required to browse.
 - **Steps:**
   1. The Mini App opens on Listings with Items selected.
-  2. The buyer can switch to House rentals and browse or search either listing type.
+  2. The buyer can switch between Items and House rentals using the tabs or by swiping horizontally across listing content, then browse or search the selected type and choose newest-first or oldest-first ordering.
   3. The buyer opens listing details and can view the seller profile or contact the seller.
 - **Back navigation:** Returning from listing details restores the same page and browsing position.
 - **Unavailable listing:** If a sold or unavailable listing is opened from an old link, show an unavailable message.
@@ -44,23 +46,23 @@ The marketplace Mini App opens on Listings with Items selected. The Admin Mini A
 - **Preconditions / access:** The seller must have a Telegram username. Browsing remains available without one.
 - **Steps:**
   1. If the Telegram username is missing, posting is blocked and the seller is told a username is required so buyers can contact them.
-  2. The first time the seller posts, show the prohibited-listings notice before opening the form; no separate acknowledgment checkbox is required.
-  3. Ask whether the seller is posting an Item or a House rental.
+  2. Before the first form, show the prohibited-listings notice once per authenticated user on that device; no separate acknowledgment checkbox is required.
+  3. Show two vertically stacked choices: Sell an item (Electronics, Clothing, or Other; new or used) and Rent out a house (whole houses only). The rental choice notes monthly rent and the seller-entered address.
   4. Open the matching form.
-  5. The seller enters listing details and uploads at least one image before submitting. Any phone number is managed separately in Profile > Settings and applies to all of the seller's listings.
+  5. For an item, collect its title, category, and New/Used condition. For a whole-house rental, collect the seller-entered address and monthly rent in ETB without asking for a title. Both forms collect a description, a price or Contact for price choice, and one to three photos. Any phone number is managed separately in Profile > Settings and applies to all of the seller's listings.
   6. The listing appears immediately after successful submission.
-- **Success outcome:** The listing is published on the matching Items or House rentals page, then its details open.
-- **Failure and recovery:** If submission fails, preserve entered details where feasible and let the seller retry.
+- **Success outcome:** The listing is published in the matching Items or House rentals tab, then its details open.
+- **Failure and recovery:** If submission fails, keep text fields and selected photos available for retry. Save text fields for recovery if the page reloads in the same tab; the seller must select photo files again after a reload.
 - **Related requirements:** F-03, F-05, F-11
 
 ### J-03 - Manage own listings
 
 - **Actor / role:** Seller
-- **Entry point:** The seller opens **Profile** and selects **My listings**.
+- **Entry point:** The seller opens **Profile**, where My listings appears below the profile summary card.
 - **Preconditions / access:** The seller is authenticated and can manage only listings they own.
 - **Steps:**
-  1. Show the seller's own listings, including sold and unavailable listings.
-  2. From Profile > Settings, the seller can edit their display name, optional phone number, and interface language.
+  1. Show the seller's own listings, including sold and unavailable listings. Switch between Items and Rentals using the tabs or a horizontal swipe starting on the tab row or listings content; vertical scrolling remains available.
+  2. Profile shows a profile summary card and My listings with Items and Rentals tabs. The gear on the profile card opens a separate Settings view; there the seller can edit their display name, see their Telegram username read-only, and add or clear an optional phone number. The gear returns to My listings. The language and theme toggles remain at the top right.
   3. The seller can edit a listing, change its availability to Sold or Unavailable as appropriate, or choose to delete it.
   4. Always ask the seller to confirm before permanently deleting a listing. Cancel returns to My listings without deleting it.
 - **Unsaved changes:** If the seller leaves a form with unsaved changes, ask for confirmation before discarding them.
@@ -88,8 +90,8 @@ The marketplace Mini App opens on Listings with Items selected. The Admin Mini A
 | Post              | Choose whether to post an item or house rental.                                                | Any Mini App user; posting requires a Telegram username. | J-02             |
 | Listing details   | Show listing information and contact options.                                                  | Any Mini App user.                                       | J-01             |
 | Seller profile    | Show seller's display name and available listings.                                             | Any Mini App user.                                       | J-01             |
-| Profile           | Open My listings and Settings.                                                                 | Authenticated user.                                      | J-03             |
-| Settings          | Edit marketplace display name, optional profile phone number, interface language, and theme.    | Authenticated user.                                      | J-03             |
+| Profile           | Show the profile summary and My listings with Items and Rentals tabs; the gear opens Settings. | Authenticated user.                                      | J-03             |
+| Settings          | Separate view opened by the profile card gear; edit display name, read Telegram username, and manage optional profile phone number. | Authenticated user. | J-03             |
 | Item form         | Create or edit an item listing.                                                                | Authenticated seller; can edit only own listings.        | J-02, J-03       |
 | House rental form | Create or edit a whole-house rental listing.                                                   | Authenticated seller; can edit only own listings.        | J-02, J-03       |
 | My listings       | Show and manage the seller's own listings, including sold/unavailable listings.                | Authenticated seller.                                    | J-03             |
@@ -108,12 +110,12 @@ The marketplace Mini App opens on Listings with Items selected. The Admin Mini A
 
 ## 6. Flow rules
 
-- Listings is the default marketplace page, with Items selected; users switch to House rentals within Listings.
+- Listings is the default marketplace page, with Items selected; users switch to House rentals within Listings using the tabs or horizontal swipes across listing content. Vertical scrolling remains available.
 - The Post navigation item asks the seller to choose Item or House rental, then opens the matching form.
-- Profile contains My listings and Settings.
+- Profile shows a profile summary card above My listings. My listings has Items and Rentals tabs, switchable by tapping or horizontal swiping from the tab row or listing content. The profile card gear opens a separate Settings view; Settings is not a tab. A visible My listings back control and the gear return to My listings.
 - The Admin Mini App has the same Listings, Post, and Profile navigation, plus Dashboard.
 - Browsing does not require seller setup. Posting requires a Telegram username.
-- The first time a seller posts, show the prohibited-listings notice before the listing form; no acknowledgment checkbox is required.
+- Before the first listing form, show the prohibited-listings notice once per authenticated user on that device; no acknowledgment checkbox is required.
 - Returning from listing details restores the same listing type and browsing position.
 - Sellers can manage only their own listings. Admin-only screens and actions require admin access.
 - Sold and unavailable listings are hidden from public feeds by default but remain in My listings.

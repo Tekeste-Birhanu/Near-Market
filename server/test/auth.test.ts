@@ -25,7 +25,7 @@ function signedInitData(
     .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
     .map(([key, value]) => `${key}=${value}`)
     .join("\n");
-  const secretKey = createHmac("sha256", token).update("WebAppData").digest();
+  const secretKey = createHmac("sha256", "WebAppData").update(token).digest();
   params.set("hash", createHmac("sha256", secretKey).update(checkString).digest("hex"));
   return params.toString();
 }
@@ -33,16 +33,91 @@ function signedInitData(
 function makeRepository(): AuthUserRepository & {
   upsertTelegramUser: ReturnType<typeof vi.fn>;
 } {
+  let profile = {
+    id: "dd7320bd-8c00-42da-9ee8-5fe6bcba7cf2",
+    telegramUsername: "seller_name" as string | null,
+    displayName: "Seller Name",
+    phoneNumber: null as string | null,
+    isAdmin: false,
+  };
   return {
-    upsertTelegramUser: vi.fn(async (telegramUser) => ({
-      id: "dd7320bd-8c00-42da-9ee8-5fe6bcba7cf2",
-      telegramUsername: telegramUser.telegramUsername,
-      displayName: telegramUser.displayName,
-      phoneNumber: null,
-      isAdmin: false,
-    })),
+    upsertTelegramUser: vi.fn(async (telegramUser) => ({ ...profile, telegramUsername: telegramUser.telegramUsername, displayName: telegramUser.displayName })),
+    getUserById: vi.fn(async () => ({ ...profile })),
+    updateProfile: vi.fn(async (_userId: string, fields: { displayName?: string; phoneNumber?: string | null }) => {
+      profile = { ...profile, ...fields };
+      return { ...profile };
+    }),
   };
 }
+
+describe("seller profile endpoints", () => {
+  const userId = "dd7320bd-8c00-42da-9ee8-5fe6bcba7cf2";
+  const token = issueAccessToken(userId, sessionSecret, now).accessToken;
+
+  it("requires authentication and returns the current authenticated profile", async () => {
+    const repository = makeRepository();
+    const app = authApp(repository);
+
+    expect((await request(app).get("/api/v1/me")).status).toBe(401);
+    const response = await request(app).get("/api/v1/me").set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      id: userId,
+      telegramUsername: "seller_name",
+      displayName: "Seller Name",
+      phoneNumber: null,
+      isAdmin: false,
+    });
+    expect(repository.getUserById).toHaveBeenCalledWith(userId);
+  });
+
+  it("updates editable profile fields and returns the updated profile", async () => {
+    const repository = makeRepository();
+    const response = await request(authApp(repository))
+      .patch("/api/v1/me")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ displayName: "  New Name  ", phoneNumber: "+251 911 234 567" });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ displayName: "New Name", phoneNumber: "+251 911 234 567" });
+    expect(repository.updateProfile).toHaveBeenCalledWith(userId, {
+      displayName: "New Name",
+      phoneNumber: "+251 911 234 567",
+    });
+  });
+
+  it("allows clearing the optional phone number", async () => {
+    const repository = makeRepository();
+    const response = await request(authApp(repository))
+      .patch("/api/v1/me")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ phoneNumber: null });
+
+    expect(response.status).toBe(200);
+    expect(response.body.phoneNumber).toBeNull();
+    expect(repository.updateProfile).toHaveBeenCalledWith(userId, { phoneNumber: null });
+  });
+
+  it.each([
+    { isAdmin: true },
+    { telegramUsername: "forged" },
+    { telegramUserId: "12345" },
+    { displayName: "   " },
+    { displayName: "x".repeat(81) },
+    { phoneNumber: "" },
+  ])("rejects unsupported or invalid profile payloads: %o", async (payload) => {
+    const repository = makeRepository();
+    const response = await request(authApp(repository))
+      .patch("/api/v1/me")
+      .set("Authorization", `Bearer ${token}`)
+      .send(payload);
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("VALIDATION_ERROR");
+    expect(repository.updateProfile).not.toHaveBeenCalled();
+  });
+});
 
 function authApp(userRepository: AuthUserRepository) {
   return createApp(
@@ -163,7 +238,7 @@ describe("API access tokens", () => {
     expect(verifyAccessToken(issued.accessToken, sessionSecret, now)?.userId).toBe(
       "dd7320bd-8c00-42da-9ee8-5fe6bcba7cf2",
     );
-    const changedSignature = `${signature.slice(0, -1)}${signature.endsWith("A") ? "B" : "A"}`;
+    const changedSignature = `${signature.startsWith("A") ? "B" : "A"}${signature.slice(1)}`;
     expect(verifyAccessToken(`${version}.${payload}.${changedSignature}`, sessionSecret, now)).toBeUndefined();
     expect(verifyAccessToken(issued.accessToken, sessionSecret, issued.expiresAt.getTime())).toBeUndefined();
   });

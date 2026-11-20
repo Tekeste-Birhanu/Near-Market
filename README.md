@@ -2,7 +2,7 @@
 
 Near Market is a Telegram Mini App marketplace for new and used items and whole-house rentals. Buyers browse listings and contact sellers directly on Telegram.
 
-## Planned stack
+## Technology stack
 
 - React, TypeScript, Vite, and Tailwind CSS
 - Node.js, TypeScript, Express, and Telegraf
@@ -32,4 +32,4 @@ npm run db:migrate --workspace=@near-market/server
 npm run test:db --workspace=@near-market/server
 ```
 
-Use a dedicated local test database for `test:db`; the integration tests roll back their changes. Run the API with `npm run dev --workspace=@near-market/server`. The health endpoint is available at `http://localhost:3000/health`.
+Use a dedicated local test database for `test:db`; the integration tests roll back their changes. Run the API with `npm run dev --workspace=@near-market/server` and the Mini App client with `npm run dev --workspace=@near-market/client`. Vite proxies client `/api` requests to the local API at `http://localhost:3001`. The health endpoint is available at `http://localhost:3001/health`.
