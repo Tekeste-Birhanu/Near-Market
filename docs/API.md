@@ -50,6 +50,8 @@ The server validates the raw query string using Telegram's bot-token HMAC-SHA-25
 
 The API returns a signed bearer token that expires one hour after issuance. It is signed with the server-only `SESSION_SECRET`, which must contain at least 32 bytes. The token carries the internal user ID, issue and expiry times, and a random nonce; it contains no role claims. Admin status is read from the database and is never trusted from the token or client. Set `DATABASE_URL`, `SESSION_SECRET`, and at least one bot token to enable session creation. Without those settings, `POST /auth/session` returns `503 AUTHENTICATION_UNAVAILABLE`; the health endpoint remains available.
 
+For initial admin provisioning, an operator may set `INITIAL_ADMIN_TELEGRAM_USER_ID` in the server environment to the intended administrator's numeric Telegram user ID. On that user's next successfully validated session, the server sets the stored role to admin. This setting never appears in API responses and does not revoke existing admins when removed or changed. To revoke the configured operator, remove or change the setting and then clear the stored role through a trusted database operation; leaving the same ID configured grants admin again at the next session. Do not put a real Telegram ID in committed examples or logs.
+
 ### `GET /me`
 
 Return the authenticated user's current profile and role using the same `user` shape as the session response.
@@ -176,9 +178,9 @@ Return the seller's public profile: `{ "id", "displayName", "telegramUsername" }
 
 Return that seller's available listings, newest first, using the standard `items` and `nextCursor` response. Optional `type` limits results to `ITEM` or `HOUSE_RENTAL`; if omitted, include both types. `limit` and `cursor` follow the feed rules. Listing summaries omit the seller's phone number.
 
-## 5. Admin API (planned in M3)
+## 5. Admin API
 
-The following routes are the approved contract for the Admin Mini App and are not implemented yet. Track delivery in `TASKS.md` T20–T23.
+Dashboard metrics and listing review/removal routes are implemented in M3. Verification status is tracked in `TASKS.md` T20–T23.
 
 All `/admin` routes require a valid authenticated session and stored admin permission. A client-supplied role never grants access.
 
@@ -190,27 +192,37 @@ Return the MVP dashboard metrics:
 {
   "totalUsers": 120,
   "totalListings": 84,
-  "mostListedItemCategory": { "category": "ELECTRONICS", "count": 35 }
+  "totalItemListings": 55,
+  "totalHouseRentalListings": 29,
+  "itemListingsByCategory": [
+    { "category": "ELECTRONICS", "count": 35 },
+    { "category": "CLOTHING", "count": 20 },
+    { "category": "OTHER", "count": 10 }
+  ]
 }
 ```
 
-Count every registered user. Count all retained listings, including sold and unavailable listings; deleted/admin-removed listings are not counted. Calculate the most-listed category from item listings only. Return `mostListedItemCategory: null` when there are no item listings. If categories tie, return the tied category with the lexically smallest enum value for a stable result.
+Count every registered user. Count all retained listings, including sold and unavailable listings; deleted/admin-removed listings are not counted. Return the item and house rental subtotals; they sum to `totalListings`. Return every item category with its retained item listing count, including zero counts. House rentals are excluded. Order categories by count descending and then category name ascending so ties are stable. When every category count is zero, the client shows an empty category message.
 
 ### `GET /admin/listings`
 
-Search and browse all retained listings, including sold and unavailable, for admin review/removal. Supports `type`, `q`, `category`, `condition`, `minPrice`, `maxPrice`, `limit`, and `cursor` with the same meanings as `GET /listings`.
+Search and browse all retained listings, including sold and unavailable, for admin review/removal. Supports `type`, `sort`, `q`, `category`, `condition`, `minPrice`, `maxPrice`, `limit`, and `cursor` with the same meanings as `GET /listings`. Category and condition filters apply only to `ITEM`; price filters apply to either type. Feed summaries include listing status, and results remain ordered newest-first by default.
 
 ### `GET /admin/listings/{listingId}`
 
 Return a listing's details to an admin regardless of availability status, including seller contact details needed to identify the seller. This route remains unavailable to regular users.
 
+### `GET /admin/listings/{listingId}/images/{imageId}`
+
+Return the image bytes for a retained listing to an admin regardless of availability status. Validate both IDs and return `404` if the image or listing is absent. Responses use the stored image media type, set `X-Content-Type-Options: nosniff`, and use `Cache-Control: private, no-store`.
+
 ### `DELETE /admin/listings/{listingId}`
 
-Permanently remove a listing and its images. After the database deletion succeeds, send the seller the agreed Telegram notice through the marketplace bot, without a reason. Return `204` on successful removal. Unknown listings return `404`.
+Permanently remove a listing and its images. After the database deletion succeeds, send the seller the agreed Telegram notice through the marketplace bot, without a reason; configure `MARKETPLACE_BOT_TOKEN` for notice delivery. If notification delivery fails or the token is not configured, keep the listing removed and return `204`; log only a generic delivery failure. Return `204` on successful removal. Unknown listings return `404`.
 
 ## 6. Telegram bot integration
 
-The current implementation uses Telegraf for the marketplace bot; the separate admin bot is planned in M3 (T20–T23). The marketplace bot's `/start` and `/app` commands return an inline button that opens the configured Marketplace Mini App URL. Bot updates are not Mini App REST endpoints. Bot tokens and Mini App URLs are server-side configuration. The marketplace bot uses Telegraf's default long polling when explicitly enabled for development; production webhook or polling configuration is deferred with hosting in `ARCHITECTURE.md`.
+The implementation uses separate Telegraf bots for the marketplace and admin launch paths. Their `/start` and `/app` commands return inline buttons for their respective Mini App URLs. Bot updates are not Mini App REST endpoints. Bot tokens and Mini App URLs are server-side configuration. Development bot startup is opt-in and uses Telegraf's default long polling; production webhook or polling configuration is deferred with hosting in `ARCHITECTURE.md`.
 
 The backend validates Telegram Mini App `initData` in `POST /auth/session`; Telegraf bot context is not a substitute for Mini App authentication. Admin access is based on the authenticated user's server-side `isAdmin` value.
 

@@ -12,11 +12,12 @@ export function ListingImage({ url, alt, className, t }: {
   className: string;
   t: (key: TranslationKey) => string;
 }) {
-  const [source, setSource] = useState(url.startsWith("/listings/") ? "" : url);
+  const isProtectedListingImage = url.startsWith("/listings/") || url.startsWith("/admin/listings/");
+  const [source, setSource] = useState(isProtectedListingImage ? "" : url);
   useEffect(() => {
     let active = true;
     let objectUrl: string | undefined;
-    if (!url.startsWith("/listings/")) {
+    if (!isProtectedListingImage) {
       setSource(url);
       return;
     }
@@ -32,7 +33,7 @@ export function ListingImage({ url, alt, className, t }: {
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [url]);
+  }, [url, isProtectedListingImage]);
 
   return source
     ? <img src={source} alt={alt} className={className} loading="lazy" />
@@ -166,10 +167,12 @@ export function ListingCard({
   listing,
   onDetails,
   t,
+  adminMode = false,
 }: {
   listing: PreviewListing;
   onDetails: (listing: PreviewListing) => void;
   t: (key: TranslationKey) => string;
+  adminMode?: boolean;
 }) {
   const badge = listing.type === "ITEM"
     ? t(listing.condition === "New" ? "new" : "used")
@@ -185,10 +188,13 @@ export function ListingCard({
             <h3 className="line-clamp-2 min-w-0 flex-1 text-[13px] font-bold leading-[17px] tracking-tight text-[var(--nm-text)]">{title}</h3>
             {listing.type === "ITEM" && <span className="mt-px shrink-0 rounded-full bg-[var(--nm-accent-soft)] px-2 py-1 text-[9.5px] font-bold leading-3 text-[var(--nm-accent-text)]">{badge}</span>}
           </div>
-          <p className="mt-1 flex items-baseline gap-1 whitespace-nowrap text-[15px] font-extrabold leading-[19px] tracking-tight text-[var(--nm-text)]">
-            {listing.price === null ? t("contactForPrice") : `ETB ${listing.price.toLocaleString("en-ET")}`}
-            {listing.type === "HOUSE_RENTAL" && <span className="text-[10px] font-medium text-[var(--nm-muted)]">{t("month")}</span>}
-          </p>
+          <div className="mt-1 flex min-w-0 items-baseline justify-between gap-1">
+            <p className="flex min-w-0 items-baseline gap-1 whitespace-nowrap text-[15px] font-extrabold leading-[19px] tracking-tight text-[var(--nm-text)]">
+              {listing.price === null ? t("contactForPrice") : `ETB ${listing.price.toLocaleString("en-ET")}`}
+              {listing.type === "HOUSE_RENTAL" && <span className="text-[10px] font-medium text-[var(--nm-muted)]">{t("month")}</span>}
+            </p>
+            {adminMode && listing.status && <span className="shrink-0 text-[9px] font-semibold text-[var(--nm-muted)]">{t(listing.status === "SOLD" ? "sold" : listing.status === "UNAVAILABLE" ? "unavailable" : "available")}</span>}
+          </div>
           {listing.type === "HOUSE_RENTAL" && <p className="mt-0.5 truncate text-[11px] leading-3.5 text-[var(--nm-secondary)]">{listing.address}</p>}
         </div>
         <div className="mt-auto flex shrink-0 gap-[7px] pt-1">

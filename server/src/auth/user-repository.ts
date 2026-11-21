@@ -15,7 +15,10 @@ export interface AuthUserRepository {
   updateProfile(userId: string, profile: { displayName?: string; phoneNumber?: string | null }): Promise<AuthenticatedUser | null>;
 }
 
-export function createPrismaUserRepository(prisma: PrismaClient): AuthUserRepository {
+export function createPrismaUserRepository(
+  prisma: PrismaClient,
+  initialAdminTelegramUserId?: bigint,
+): AuthUserRepository {
   return {
     async upsertTelegramUser(telegramUser) {
       const user = await prisma.user.upsert({
@@ -24,9 +27,11 @@ export function createPrismaUserRepository(prisma: PrismaClient): AuthUserReposi
           telegramUserId: telegramUser.telegramUserId,
           telegramUsername: telegramUser.telegramUsername,
           displayName: telegramUser.displayName,
+          ...(telegramUser.telegramUserId === initialAdminTelegramUserId ? { isAdmin: true } : {}),
         },
         update: {
           telegramUsername: telegramUser.telegramUsername,
+          ...(telegramUser.telegramUserId === initialAdminTelegramUserId ? { isAdmin: true } : {}),
         },
         select: {
           id: true,

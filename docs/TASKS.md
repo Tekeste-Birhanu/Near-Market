@@ -39,7 +39,7 @@ Set up the client, server, database, and Telegram access needed by the marketpla
 - [x] Configure the marketplace bot start/launch path to the Marketplace Mini App using a server-side token.
 - [x] Allow local API work without a bot token; fail safely when bot startup is enabled with invalid configuration.
 - [x] Test bot configuration without contacting Telegram.
-- [ ] Verify the launch action with a reachable development Mini App URL; the last recorded Telegram test returned Cloudflare HTTP 502.
+- [ ] Verify the launch action with a reachable development Mini App URL; the last recorded Telegram check returned Cloudflare HTTP 502.
 
 **T07 - Connect the client to Telegram authentication**
 
@@ -118,10 +118,10 @@ Build the shared Mini App experience: app shell and profile, browsing and contac
 
 **T17 - Build item listing form and publish flow**
 
-  - [x] Add item title, description, category (Electronics, Clothing, Other), separate New/Used condition, ETB price or Contact for price, and one-to-three photo fields.
-  - [x] Validate required fields and at least one image before submission, show field errors beside inputs and loading/success feedback, and open details after success.
-  - [x] Keep seller-entered text in its original language without translated duplicate fields; use a scrollable form, photo thumbnails with remove controls, and place Publish at the end of the form; confirm before discarding unsaved changes.
-  - [x] Preserve form values after submission failure or interruption where feasible; verify required fields, image limits, success, and retry with React Testing Library.
+- [x] Add item title, description, category (Electronics, Clothing, Other), separate New/Used condition, ETB price or Contact for price, and one-to-three photo fields.
+- [x] Validate required fields and at least one image before submission, show field errors beside inputs and loading/success feedback, and open details after success.
+- [x] Keep seller-entered text in its original language without translated duplicate fields; use a scrollable form, photo thumbnails with remove controls, and place Publish at the end of the form; confirm before discarding unsaved changes.
+- [x] Preserve form values after submission failure or interruption where feasible; verify required fields, image limits, success, and retry with React Testing Library.
 
 **T18 - Build house rental form and publish flow**
 
@@ -143,27 +143,31 @@ Add admin-only access, marketplace metrics, listing review, removal, and seller 
 
 **T20 - Establish trusted admin provisioning**
 
-- [ ] Add an operator-only method to grant the initial admin role; never allow Mini App requests to grant admin access.
-- [ ] Document the setup without committing Telegram IDs or secrets; verify regular users cannot elevate their role.
+- [x] Add an operator-only method to grant the initial admin role; never allow Mini App requests to grant admin access.
+- [x] Document the setup without committing Telegram IDs or secrets.
+- [x] Verify regular users cannot elevate their role or access admin-only APIs.
 
 **T21 - Build Admin Mini App entry and navigation**
 
-- [ ] Add admin authorization, Dashboard navigation, and the separate Telegraf admin bot launch action.
-- [ ] Give admins the shared Listings, Post, and Profile navigation plus Dashboard, opening on Dashboard; block non-admin access to admin screens/actions.
-- [ ] Keep the admin bot token server-side; defer production webhook/polling choice until hosting is selected.
-- [ ] Verify authorization and the launch action with a configured development bot.
+- [x] Add admin authorization, Dashboard navigation, and the separate Telegraf admin bot launch action.
+- [x] Give admins the shared Listings, Post, and Profile navigation plus Dashboard, opening on Dashboard; block non-admin access to admin screens/actions.
+- [x] Keep the admin bot token server-side; defer production webhook/polling choice until hosting is selected.
+- [x] Verify role provisioning, authorization, and admin bot command handlers with unit/API tests.
+- [ ] Verify the launch action with a configured development bot.
 
 **T22 - Implement admin dashboard metrics**
 
-- [ ] Add `/admin/dashboard` and cards for total users, total retained listings, and most-listed item category.
-- [ ] Count every registered user (buyers and sellers) and all retained listings, including sold/unavailable; calculate most-listed category across retained item listings and handle empty/tied results deterministically.
-- [ ] Show the three metrics in separate cards; verify results, empty/tied data, admin authorization, and card rendering with tests.
+- [x] Add `/admin/dashboard` and cards for total users, total retained listings, item listings, house rentals, and item listing counts by category.
+- [x] Count every registered user (buyers and sellers) and all retained listings, including sold/unavailable; split listing totals by type, count item categories only, and order category counts by count descending with alphabetical tie order.
+- [x] Show the four summary metrics in separate cards and the category counts in a wider card.
+- [x] Verify results, empty/tied data, admin authorization, and card rendering with tests.
 
 **T23 - Implement admin listing review, removal, and seller notice**
 
-- [ ] Let admins browse/search the same Items and House rentals tabs within Listings as other users, with filters, and inspect retained listings and their images regardless of availability; deny these operations to non-admins.
-- [ ] Confirm removal, delete the listing and images, then send the seller notice through the marketplace bot without a reason.
-- [ ] Handle notification failures without restoring removed listings or logging private data; verify API and mocked Telegram behavior.
+- [x] Let admins browse/search the same Items and House rentals tabs within Listings as other users, with filters, and inspect retained listings and their images regardless of availability; deny these operations to non-admins.
+- [x] Confirm removal, delete the listing and images, then send the seller notice through the marketplace bot without a reason.
+- [x] Handle notification failures without restoring removed listings or logging private data.
+- [x] Verify API authorization, removal, and mocked Telegram notification behavior; do not log private data.
 
 ## M4 - Release readiness
 

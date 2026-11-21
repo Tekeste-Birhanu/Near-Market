@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError } from "../api/client";
 import {
   fetchListingDetails,
+  fetchAdminListingDetails,
   fetchSellerListings,
   fetchSellerProfile,
   toCardListing,
+  removeAdminListing,
   type ListingDetails,
   type ListingImage as ApiListingImage,
   type ListingSummary,
@@ -26,6 +28,8 @@ export function ListingViews({
   onBack,
   onSeller,
   onListing,
+  adminMode = false,
+  onListingRemoved,
 }: {
   route: ViewRoute;
   theme: Theme;
@@ -36,6 +40,8 @@ export function ListingViews({
   onBack: () => void;
   onSeller: (sellerId: string) => void;
   onListing: (listingId: string) => void;
+  adminMode?: boolean;
+  onListingRemoved?: () => void;
 }) {
   return route.kind === "listing" ? (
     <ListingDetailsView
@@ -47,6 +53,8 @@ export function ListingViews({
       t={t}
       onBack={onBack}
       onSeller={onSeller}
+      adminMode={adminMode}
+      onListingRemoved={onListingRemoved}
     />
   ) : (
     <SellerProfileView
@@ -71,6 +79,8 @@ function ListingDetailsView({
   t,
   onBack,
   onSeller,
+  adminMode,
+  onListingRemoved,
 }: {
   listingId: string;
   theme: Theme;
@@ -80,18 +90,22 @@ function ListingDetailsView({
   t: Translator;
   onBack: () => void;
   onSeller: (sellerId: string) => void;
+  adminMode: boolean;
+  onListingRemoved?: () => void;
 }) {
   const [listing, setListing] = useState<ListingDetails | null>(null);
   const [error, setError] = useState<"unavailable" | "notFound" | "failed" | null>(null);
   const [loading, setLoading] = useState(true);
   const [retryKey, setRetryKey] = useState(0);
+  const [removing, setRemoving] = useState(false);
+  const [removeError, setRemoveError] = useState(false);
   const backRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    void fetchListingDetails(listingId, controller.signal).then(setListing).catch((cause: unknown) => {
+    void (adminMode ? fetchAdminListingDetails(listingId, controller.signal) : fetchListingDetails(listingId, controller.signal)).then(setListing).catch((cause: unknown) => {
       if (controller.signal.aborted) return;
       if (cause instanceof ApiError && cause.code === "LISTING_UNAVAILABLE") setError("unavailable");
       else if (cause instanceof ApiError && cause.status === 404) setError("notFound");
@@ -100,7 +114,20 @@ function ListingDetailsView({
       if (!controller.signal.aborted) setLoading(false);
     });
     return () => controller.abort();
-  }, [listingId, retryKey]);
+  }, [adminMode, listingId, retryKey]);
+
+  async function removeListing() {
+    if (!window.confirm(t("confirmAdminListingRemoval"))) return;
+    setRemoving(true);
+    setRemoveError(false);
+    try {
+      await removeAdminListing(listingId);
+      onListingRemoved?.();
+    } catch {
+      setRemoveError(true);
+      setRemoving(false);
+    }
+  }
 
   useEffect(() => {
     backRef.current?.focus();
@@ -156,6 +183,10 @@ function ListingDetailsView({
               {listing.seller.telegramUsername && <a href={telegramUrl(listing.seller.telegramUsername)} target="_blank" rel="noopener noreferrer" className="mt-3 flex h-10 items-center justify-center gap-2 rounded-xl bg-[var(--nm-action)] text-xs font-bold text-white hover:bg-[var(--nm-action-hover)]"><Icon name="send" className="h-4 w-4" />{t("contactSeller")}</a>}
               {listing.seller.phoneNumber && <a href={`tel:${listing.seller.phoneNumber.replace(/[^\d+*#,;]/g, "")}`} className="mt-2 flex h-10 items-center justify-center rounded-xl border border-[var(--nm-border)] text-xs font-semibold">{t("phoneNumber")}: {listing.seller.phoneNumber}</a>}
             </SurfaceCard>
+            {adminMode && <section className="space-y-2">
+              {removeError && <p role="alert" className="text-sm text-red-500">{t("adminListingRemovalFailed")}</p>}
+              <button type="button" onClick={() => void removeListing()} disabled={removing} className="flex h-11 w-full items-center justify-center rounded-xl border border-red-500/50 text-sm font-semibold text-red-500 disabled:opacity-60">{removing ? t("removingAdminListing") : t("removeAdminListing")}</button>
+            </section>}
           </div>
         </article>
       ) : null}

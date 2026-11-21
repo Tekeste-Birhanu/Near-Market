@@ -4,7 +4,7 @@
 
 Describe how buyers, sellers, and admins move through Near Market. Product requirements are in `PRD.md`; visual guidance is in `DESIGN.md`.
 
-Admin journeys and screens below describe the planned M3 scope (T20–T23); the current implementation includes the marketplace Mini App and marketplace bot only.
+Admin journeys and screens below describe M3 (T20–T23). Admin provisioning, Dashboard, listing review/removal, and the admin bot launch are implemented; verification status is tracked in `TASKS.md`.
 
 ## 2. Navigation map
 
@@ -21,7 +21,7 @@ Telegram bot
       └── Dashboard (default)
 ```
 
-The marketplace Mini App opens on Listings with Items selected. The Admin Mini App has the same navigation plus Dashboard and opens on Dashboard. Show Near Market branding on Listings only. Every page places the same English/Amharic and Light/Dark toggles at the top right; other pages use their own page titles. The interface defaults to English and Dark mode; save both selections locally. The app does not follow Telegram's theme. Users can browse before setting up to post.
+The marketplace Mini App opens on Listings with Items selected. The Admin Mini App has the same navigation plus Dashboard and opens on Dashboard. Keep the marketplace app's existing navigation and headers. Show Near Market branding on Listings in the marketplace app and on Dashboard in the Admin Mini App; the Admin Mini App's Listings, Post, and Profile pages use their own page titles. Every page places the same English/Amharic and Light/Dark toggles at the top right. The interface defaults to English and Dark mode; save both selections locally. The app does not follow Telegram's theme. Users can browse before setting up to post.
 
 ## 3. Main journeys
 
@@ -75,9 +75,9 @@ The marketplace Mini App opens on Listings with Items selected. The Admin Mini A
 - **Entry point:** Admin opens the separate admin bot, which launches the Admin Mini App.
 - **Preconditions / access:** The user is authorized as an admin.
 - **Steps:**
-  1. The Admin Mini App opens on the Dashboard tab, showing all registered users (buyers and sellers), total listings, and the most listed item category.
+  1. The Admin Mini App opens on the Dashboard tab, showing all registered users (buyers and sellers), total retained listings, item listings, house rentals, and retained item listing counts for Electronics, Clothing, and Other in descending count order.
   2. The admin navigates to Items or House rentals and browses or searches listings, as other users do.
-  3. The admin opens a listing, chooses to remove it, and confirms the action.
+  3. The admin opens the listing details, chooses to remove it there, and confirms the action.
   4. The listing is removed and its seller is notified on Telegram without a reason being included.
 - **Success outcome:** The listing is no longer available to buyers.
 - **Related requirements:** F-09
@@ -95,7 +95,7 @@ The marketplace Mini App opens on Listings with Items selected. The Admin Mini A
 | Item form         | Create or edit an item listing.                                                                | Authenticated seller; can edit only own listings.        | J-02, J-03       |
 | House rental form | Create or edit a whole-house rental listing.                                                   | Authenticated seller; can edit only own listings.        | J-02, J-03       |
 | My listings       | Show and manage the seller's own listings, including sold/unavailable listings.                | Authenticated seller.                                    | J-03             |
-| Dashboard         | Show all registered users (buyers and sellers), total listings, and most listed item category. | Authorized admin.                                        | J-04             |
+| Dashboard         | Show all registered users (buyers and sellers), total retained listings, item listings, house rentals, and retained item listing counts by category. | Authorized admin.                                        | J-04             |
 
 ## 5. Shared states and edge cases
 

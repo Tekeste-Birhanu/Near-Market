@@ -5,9 +5,12 @@ export interface AppConfig {
   databaseUrl?: string;
   sessionSecret?: string;
   marketplaceBotEnabled: boolean;
+  adminBotEnabled?: boolean;
   marketplaceBotToken?: string;
   marketplaceMiniAppUrl?: string;
   adminBotToken?: string;
+  adminMiniAppUrl?: string;
+  initialAdminTelegramUserId?: bigint;
 }
 
 export class ConfigurationError extends Error {
@@ -38,6 +41,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   if (marketplaceBotEnabledValue !== "true" && marketplaceBotEnabledValue !== "false") {
     throw new ConfigurationError("MARKETPLACE_BOT_ENABLED");
   }
+  const adminBotEnabledValue = env.ADMIN_BOT_ENABLED ?? "false";
+  if (adminBotEnabledValue !== "true" && adminBotEnabledValue !== "false") {
+    throw new ConfigurationError("ADMIN_BOT_ENABLED");
+  }
 
   const config: AppConfig = {
     port: positiveInteger(env.PORT, 3001, "PORT", 65_535),
@@ -45,6 +52,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     rateLimitMax: positiveInteger(env.RATE_LIMIT_MAX, 100, "RATE_LIMIT_MAX"),
     marketplaceBotEnabled: marketplaceBotEnabledValue === "true",
   };
+  if (adminBotEnabledValue === "true") config.adminBotEnabled = true;
 
   if (env.DATABASE_URL) {
     try {
@@ -68,6 +76,21 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   if (env.MARKETPLACE_BOT_TOKEN) config.marketplaceBotToken = env.MARKETPLACE_BOT_TOKEN;
   if (env.ADMIN_BOT_TOKEN) config.adminBotToken = env.ADMIN_BOT_TOKEN;
 
+  if (env.INITIAL_ADMIN_TELEGRAM_USER_ID) {
+    if (!/^\d+$/.test(env.INITIAL_ADMIN_TELEGRAM_USER_ID)) {
+      throw new ConfigurationError("INITIAL_ADMIN_TELEGRAM_USER_ID");
+    }
+    try {
+      const telegramUserId = BigInt(env.INITIAL_ADMIN_TELEGRAM_USER_ID);
+      if (telegramUserId < 1n || telegramUserId > BigInt(Number.MAX_SAFE_INTEGER)) {
+        throw new Error("invalid Telegram user ID");
+      }
+      config.initialAdminTelegramUserId = telegramUserId;
+    } catch {
+      throw new ConfigurationError("INITIAL_ADMIN_TELEGRAM_USER_ID");
+    }
+  }
+
   if (config.marketplaceBotEnabled) {
     if (!config.marketplaceBotToken || !/^\d+:[A-Za-z0-9_-]{20,}$/.test(config.marketplaceBotToken)) {
       throw new ConfigurationError("MARKETPLACE_BOT_TOKEN");
@@ -81,6 +104,22 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       config.marketplaceMiniAppUrl = url.toString();
     } catch {
       throw new ConfigurationError("MARKETPLACE_MINI_APP_URL");
+    }
+  }
+
+  if (config.adminBotEnabled) {
+    if (!config.adminBotToken || !/^\d+:[A-Za-z0-9_-]{20,}$/.test(config.adminBotToken)) {
+      throw new ConfigurationError("ADMIN_BOT_TOKEN");
+    }
+    if (!env.ADMIN_MINI_APP_URL) throw new ConfigurationError("ADMIN_MINI_APP_URL");
+    try {
+      const url = new URL(env.ADMIN_MINI_APP_URL);
+      if (url.protocol !== "https:" || url.username || url.password || url.hash) {
+        throw new Error("unsupported Mini App URL");
+      }
+      config.adminMiniAppUrl = url.toString();
+    } catch {
+      throw new ConfigurationError("ADMIN_MINI_APP_URL");
     }
   }
 

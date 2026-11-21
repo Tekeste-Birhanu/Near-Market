@@ -8,7 +8,7 @@
 - **Deployment target:** Undecided.
 - **Key constraints:** The marketplace bot and separate admin bot run through the same Node.js backend service. Telegram identity data must be validated by the backend before use.
 
-The current code implements the marketplace Mini App, marketplace bot, and shared API. The Admin Mini App and admin bot are planned work tracked under M3 (T20–T23); the architecture and contracts below describe their approved target design.
+The code implements the marketplace Mini App and shared API, plus the Admin Mini App dashboard, admin listing review/removal, and separate admin bot launch. Verification status is tracked in `TASKS.md`.
 
 ## 2. Technology stack
 
@@ -79,7 +79,9 @@ The project is kept in one repository with `client/`, `server/`, and `docs/` fol
 - **Errors and logging:** Return clear errors to clients. Never log bot tokens, credentials, or raw authentication data.
 - **API rate limiting:** The initial Express process limit is 100 requests per client IP per 60 seconds (`RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`), returning the API `429` error shape. It is in-memory per process; revisit limits and configure trusted proxy handling for the selected production host before release.
 - **Configuration and secrets:** Supply bot tokens, database credentials, and other environment-specific values through deployment secrets; do not commit real values.
+- **Initial admin provisioning:** `INITIAL_ADMIN_TELEGRAM_USER_ID` is an optional server-only environment setting. After backend validation of Telegram `initData`, a matching user's database record is granted `isAdmin=true`. The setting does not revoke existing admins when changed or removed. To revoke the configured operator, remove or change the setting and clear the stored role through a trusted operator database action; otherwise the matching ID is granted admin again at the next session. Never accept admin role changes from Mini App requests.
 - **Marketplace bot launch:** `/start` and `/app` return an inline button that opens the configured Marketplace Mini App. Bot startup is disabled by default so local API development does not require Telegram credentials.
+- **Admin bot launch:** The separate admin bot has its own server-only token and an HTTPS `ADMIN_MINI_APP_URL` targeting `?app=admin`. In development it starts only when `ADMIN_BOT_ENABLED=true`; `/start` and `/app` show the Admin Mini App launch button. Production webhook or polling configuration remains deferred until hosting is selected.
 - **Background work and external services:** No external image storage service is used in v1. Compress listing images and enforce the 5 MB per-image upload limit.
 
 ## 8. Open technical questions

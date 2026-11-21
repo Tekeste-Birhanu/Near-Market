@@ -4,10 +4,14 @@ import { createDatabaseClient } from "./database.ts";
 import { loadProjectEnv } from "./load-env.ts";
 import { createPrismaUserRepository } from "./auth/user-repository.ts";
 import { createMarketplaceBot } from "./bots/marketplace.ts";
+import { createAdminBot } from "./bots/admin.ts";
 import { createPrismaListingFeedRepository } from "./listings/feed-repository.ts";
 import { createPrismaListingReadRepository } from "./listings/read-repository.ts";
 import { createPrismaListingCreateRepository } from "./listings/create-repository.ts";
 import { createPrismaListingLifecycleRepository } from "./listings/lifecycle-repository.ts";
+import { createPrismaAdminDashboardRepository } from "./admin/dashboard-repository.ts";
+import { createPrismaAdminListingRepository } from "./admin/listings-repository.ts";
+import { Telegraf } from "telegraf";
 
 async function startServer(): Promise<void> {
   loadProjectEnv();
@@ -21,9 +25,19 @@ async function startServer(): Promise<void> {
       : undefined,
     listingCreateRepository: prisma ? createPrismaListingCreateRepository(prisma) : undefined,
     listingLifecycleRepository: prisma ? createPrismaListingLifecycleRepository(prisma) : undefined,
+    adminDashboardRepository: prisma ? createPrismaAdminDashboardRepository(prisma) : undefined,
+    adminListingRepository: prisma ? createPrismaAdminListingRepository(prisma) : undefined,
+    notifyListingSeller: config.marketplaceBotToken
+      ? (telegramUserId) => new Telegraf(config.marketplaceBotToken!).telegram.sendMessage(
+        telegramUserId,
+        "One of your listings was removed by a Near Market administrator.",
+      ).then(() => undefined)
+      : undefined,
     auth: {
       sessionSecret: config.sessionSecret,
-      userRepository: prisma ? createPrismaUserRepository(prisma) : undefined,
+      userRepository: prisma
+        ? createPrismaUserRepository(prisma, config.initialAdminTelegramUserId)
+        : undefined,
       botTokens: [config.marketplaceBotToken, config.adminBotToken].filter(
         (token): token is string => Boolean(token),
       ),
@@ -49,6 +63,28 @@ async function startServer(): Promise<void> {
           code?: string;
         };
         console.error("Marketplace bot failed to connect; API remains available.", {
+          telegramCode: telegramError.response?.error_code,
+          telegramDescription: telegramError.response?.description,
+          networkCode: telegramError.code,
+        });
+      });
+  }
+
+  if (config.adminBotEnabled && config.adminBotToken && config.adminMiniAppUrl) {
+    const adminBot = createAdminBot(config.adminBotToken, config.adminMiniAppUrl);
+    process.once("SIGINT", () => adminBot.stop("SIGINT"));
+    process.once("SIGTERM", () => adminBot.stop("SIGTERM"));
+    void adminBot.telegram.getMe()
+      .then(({ username }) => {
+        console.info(`Admin bot token loaded for @${username ?? "unknown"}.`);
+        return adminBot.launch();
+      })
+      .catch((error: unknown) => {
+        const telegramError = error as {
+          response?: { error_code?: number; description?: string };
+          code?: string;
+        };
+        console.error("Admin bot failed to connect; API remains available.", {
           telegramCode: telegramError.response?.error_code,
           telegramDescription: telegramError.response?.description,
           networkCode: telegramError.code,

@@ -2,7 +2,7 @@
 
 ## 1. Design direction
 - **Product feel:** Familiar and easy to use inside Telegram, with a distinct Near Market identity.
-- **Appearance controls:** Reuse the same English/Amharic and Light/Dark toggles at the top right on every page. Show Near Market branding on the Listings page only; other pages use their own page titles. Default to English and Dark mode; persist both choices locally. Do not use Telegram's active theme as the default or override the user's selection.
+- **Appearance controls:** Reuse the same English/Amharic and Light/Dark toggles at the top right on every page. In the marketplace app, show Near Market branding on Listings only; other pages use their own page titles. In the Admin Mini App, show Near Market branding on Dashboard only; Listings, Post, and Profile use their own page titles. Default to English and Dark mode; persist both choices locally. Do not use Telegram's active theme as the default or override the user's selection.
 - **Primary audience:** Buyers and sellers browsing and posting items or whole-house rentals, plus admins using the Admin Mini App.
 - **Design priorities:** Make listings easy to scan, keep prices and contact actions clear, and keep posting straightforward on mobile.
 
@@ -47,12 +47,12 @@ Use a shared card surface with a consistent radius, border, and background throu
 | Bottom navigation | Move between main areas of the Mini App. | Show an icon and label for Listings, Post, and Profile. The Admin Mini App also has Dashboard. |
 | Listing type tabs | Switch between Items and House rentals within Listings. | Place a simple tab bar outside and below the branding/search card, with a clear gap. Keep it on the page background without a separate card. Items is selected by default. Search applies only to the selected tab and sits above the tabs. Show a faint baseline across the row and an active underline spanning the selected tab segment; color the selected label blue. Allow horizontal swipes on listing content to switch tabs without interrupting vertical scrolling or controls. |
 | Search and filters | Find listings in the selected listing type. | Keep filters hidden until Filter is tapped; show controls inline on Listings. Use app-styled, keyboard-accessible dropdowns. Include Clear filters to reset visible filter values without closing the panel or clearing search. |
-| Appearance controls | Keep app language and theme settings consistent across pages. | Reuse the same 36px English/Amharic and Light/Dark toggles at the top right of every page. Keep page headers 64px tall, with 20px horizontal insets and the same safe-area top inset. Use 20px page titles. Set a consistent 16px gap between the header and the first content block on every page. Show Near Market branding on Listings only; other pages show their own title. Default to English and Dark mode; persist both choices locally. The app theme is independent of Telegram's theme. |
+| Appearance controls | Keep app language and theme settings consistent across pages. | Reuse the same 36px English/Amharic and Light/Dark toggles at the top right of every page. Keep page headers 64px tall, with 20px horizontal insets and the same safe-area top inset. Use 20px page titles. Set a consistent 16px gap between the header and the first content block on every page. In the marketplace app, show Near Market branding on Listings only; in the Admin Mini App, show it on Dashboard only. Other pages show their own title. Default to English and Dark mode; persist both choices locally. The app theme is independent of Telegram's theme. |
 | Profile card | Identify the signed-in seller and provide a Settings shortcut. | Show the seller's display name and Telegram username when available, plus a gear button. The gear opens a separate Settings view; it is not a Profile tab. |
 | Listing card | Summarize a listing in the feed. | Stack cards vertically. Use a square image at about one-third width, with a compact heading, prominent price, and a compact Contact button beside a compact View details button. Item cards show their seller-entered title and New or Used. Rental cards use the localized House rental label as the heading and show the seller-entered address. Use the same layout for both listing types. |
 | Photo gallery | Display listing photos on the details page. | Show a large main photo at the top and allow swiping through up to three photos. |
 | Listing form | Create or edit a listing. | Use one scrollable form for each listing type. Show uploaded photos as thumbnails with a remove control. Place Discard draft and Publish at the end of the form, with enough bottom spacing to clear the fixed navigation. |
-| Dashboard metric card | Present an admin marketplace total. | Show total users, total listings, and most listed item category in three separate summary cards. |
+| Dashboard metric card | Present admin marketplace totals and the item category mix. | Show total users, total retained listings, item listings, and house rentals in separate summary cards. Use a wider card with Electronics, Clothing, and Other counts in descending count order and alphabetical tie order. Include sold and unavailable listings; exclude house rentals from the category breakdown. |
 
 ## 5. Screen-specific guidance
 
@@ -92,7 +92,12 @@ Use a shared card surface with a consistent radius, border, and background throu
 
 ### Admin dashboard
 - **Purpose:** Give admins a quick view of marketplace totals.
-- **Layout and hierarchy:** Present total users, total listings, and most listed item category in three separate summary cards.
+- **Layout and hierarchy:** Present total users, total retained listings, item listings, and house rentals in compact cards. Show item listing counts for Electronics, Clothing, and Other in a wider card, ordered by count descending with alphabetical tie order. If all category counts are zero, show a concise empty message. If the category list grows beyond three rows, initially show three rows with a Show all categories control to expand it. Item and rental totals include sold and unavailable listings and sum to total listings.
+- **Related flow:** J-04 in `APP_FLOW.md`.
+
+### Admin listing review
+- **Purpose:** Let admins inspect retained listings and remove prohibited or otherwise unsuitable listings.
+- **Layout and behavior:** Reuse the Items and House rentals tabs, search, filters, and listing cards from Listings. Admin results include sold and unavailable listings. Details show the listing status and photos; provide a destructive Remove listing action with a confirmation that explains the seller will be notified.
 - **Related flow:** J-04 in `APP_FLOW.md`.
 
 ## 6. Interaction and UI states

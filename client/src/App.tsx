@@ -5,6 +5,7 @@ import { usePreferences } from "./hooks/usePreferences";
 import { ListingsPage } from "./pages/ListingsPage";
 import { PostPage } from "./pages/PostPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import {
   createSession,
   getTelegramInitData,
@@ -34,6 +35,7 @@ function DesignPreview({
   postSuccessNotice,
   t,
   previewMode,
+  adminMode,
 }: {
   activePage: MainPage;
   onPageChange: (page: MainPage) => void;
@@ -49,6 +51,7 @@ function DesignPreview({
   postSuccessNotice: string;
   t: ReturnType<typeof usePreferences>["t"];
   previewMode: boolean;
+  adminMode: boolean;
 }) {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const reportPageDirty = useCallback((dirty: boolean) => setHasUnsavedChanges(dirty), []);
@@ -61,8 +64,9 @@ function DesignPreview({
   return (
     <div className="mx-auto min-h-dvh w-full max-w-[390px] bg-[var(--nm-bg)] text-[var(--nm-text)]">
       {activePage === "listings" && (
-        <ListingsPage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} t={t} previewMode={previewMode} onPost={() => handlePageChange("post")} newListingId={newListingId} onNewListingOpened={onNewListingOpened} />
+        <ListingsPage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} t={t} previewMode={previewMode} onPost={() => handlePageChange("post")} newListingId={newListingId} onNewListingOpened={onNewListingOpened} adminMode={adminMode} />
       )}
+      {adminMode && activePage === "dashboard" && <AdminDashboardPage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} t={t} />}
       {activePage === "post" && (
         <PostPage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} user={user} onDirtyChange={reportPageDirty} onPublished={onListingPublished} t={t} />
       )}
@@ -70,14 +74,15 @@ function DesignPreview({
         <ProfilePage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} user={user} onUserChange={onUserChange} onDirtyChange={reportPageDirty} t={t} />
       )}
       {postSuccessNotice && <p role="status" className="fixed left-4 right-4 top-[max(12px,env(safe-area-inset-top))] z-[60] mx-auto max-w-[358px] rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow-lg">{postSuccessNotice}</p>}
-      <BottomNavigation activePage={activePage} onPageChange={handlePageChange} t={t} />
+      <BottomNavigation activePage={activePage} onPageChange={handlePageChange} t={t} adminMode={adminMode} />
     </div>
   );
 }
 
 export function App() {
+  const adminMode = new URLSearchParams(window.location.search).get("app") === "admin";
   const [auth, setAuth] = useState<AuthState>({ status: "loading" });
-  const [activePage, setActivePage] = useState<MainPage>("listings");
+  const [activePage, setActivePage] = useState<MainPage>(adminMode ? "dashboard" : "listings");
   const [newListingId, setNewListingId] = useState<string | null>(null);
   const [postSuccessNotice, setPostSuccessNotice] = useState("");
   const { theme, setTheme, language, setLanguage, t } = usePreferences();
@@ -141,6 +146,7 @@ export function App() {
         postSuccessNotice={postSuccessNotice}
         t={t}
         previewMode
+        adminMode={adminMode}
       />
     );
   }
@@ -158,6 +164,9 @@ export function App() {
       </main>
     );
   }
+  if (adminMode && !auth.session.user.isAdmin) {
+    return <main className="p-6 text-center text-sm text-[var(--nm-muted)]" role="alert">{t("adminAccessRequired")}</main>;
+  }
   return (
     <DesignPreview
       activePage={activePage}
@@ -174,6 +183,7 @@ export function App() {
       postSuccessNotice={postSuccessNotice}
       t={t}
       previewMode={false}
+      adminMode={adminMode}
     />
   );
 }

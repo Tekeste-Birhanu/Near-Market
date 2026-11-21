@@ -152,6 +152,14 @@ export async function fetchListingDetails(listingId: string, signal?: AbortSigna
   return apiRequest<ListingDetails>(`/listings/${encodeURIComponent(listingId)}`, { signal });
 }
 
+export async function fetchAdminListingDetails(listingId: string, signal?: AbortSignal): Promise<ListingDetails> {
+  return apiRequest<ListingDetails>(`/admin/listings/${encodeURIComponent(listingId)}`, { signal });
+}
+
+export async function removeAdminListing(listingId: string): Promise<void> {
+  await apiRequest<void>(`/admin/listings/${encodeURIComponent(listingId)}`, { method: "DELETE" });
+}
+
 export async function fetchSellerProfile(sellerId: string, signal?: AbortSignal): Promise<SellerProfile> {
   return apiRequest<SellerProfile>(`/sellers/${encodeURIComponent(sellerId)}`, { signal });
 }

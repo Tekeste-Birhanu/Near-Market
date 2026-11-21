@@ -31,6 +31,7 @@ export function ListingsPage({
   onPost,
   newListingId,
   onNewListingOpened,
+  adminMode = false,
 }: {
   theme: Theme;
   onThemeChange: (theme: Theme) => void;
@@ -41,6 +42,7 @@ export function ListingsPage({
   onPost: () => void;
   newListingId?: string | null;
   onNewListingOpened?: () => void;
+  adminMode?: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<ListingType>("ITEM");
   const [showFilters, setShowFilters] = useState(false);
@@ -98,7 +100,7 @@ export function ListingsPage({
       setFeedStatus("loading");
       setFeedError("");
       setNextCursor(null);
-      void apiRequest<ListingFeedResponse>(`/listings?${params.toString()}`, { signal: controller.signal })
+      void apiRequest<ListingFeedResponse>(`${adminMode ? "/admin/listings" : "/listings"}?${params.toString()}`, { signal: controller.signal })
         .then((response) => {
           setFeedListings(response.items.map(toCardListing));
           setNextCursor(response.nextCursor);
@@ -114,7 +116,7 @@ export function ListingsPage({
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [activeTab, category, condition, price, previewMode, query, retryKey, sort, t]);
+  }, [activeTab, adminMode, category, condition, price, previewMode, query, retryKey, sort, t]);
 
   const listings = previewMode ? previewFeed : feedListings;
 
@@ -140,7 +142,7 @@ export function ListingsPage({
     setFeedError("");
     const params = buildFeedParams(activeTab, query, category, condition, price, sort, nextCursor);
     try {
-      const response = await apiRequest<ListingFeedResponse>(`/listings?${params.toString()}`);
+    const response = await apiRequest<ListingFeedResponse>(`${adminMode ? "/admin/listings" : "/listings"}?${params.toString()}`);
       setFeedListings((current) => [...current, ...response.items.map(toCardListing)]);
       setNextCursor(response.nextCursor);
       setFeedStatus("ready");
@@ -155,12 +157,14 @@ export function ListingsPage({
     <div aria-hidden={activeView ? true : undefined} className="flex min-h-dvh flex-col bg-[var(--nm-page)] text-[var(--nm-text)]">
       <header className="flex min-h-[64px] w-full items-center justify-between gap-3 bg-[var(--nm-header)] px-5 pb-1 pt-[max(6px,env(safe-area-inset-top))]">
         <div className="flex w-full items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-brand-500 text-lg font-extrabold tracking-tight text-white shadow-[0_8px_24px_rgba(22,134,200,0.18)]">N</div>
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-bold leading-6 tracking-tight">Near Market</h1>
-            </div>
-          </div>
+          {adminMode
+            ? <h1 className="text-xl font-bold leading-6 text-[var(--nm-text)]">{t("listings")}</h1>
+            : <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-brand-500 text-lg font-extrabold tracking-tight text-white shadow-[0_8px_24px_rgba(22,134,200,0.18)]">N</div>
+              <div className="min-w-0">
+                <h1 className="truncate text-xl font-bold leading-6 tracking-tight">Near Market</h1>
+              </div>
+            </div>}
           <AppearanceControls theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} t={t} />
         </div>
       </header>
@@ -311,7 +315,7 @@ export function ListingsPage({
           </div>
         ) : listings.length ? (
           <div className="grid gap-2">
-            {listings.map((listing) => <ListingCard key={listing.id} listing={listing} onDetails={openListing} t={t} />)}
+            {listings.map((listing) => <ListingCard key={listing.id} listing={listing} onDetails={openListing} t={t} adminMode={adminMode} />)}
             {!previewMode && nextCursor && <button type="button" onClick={() => void loadMore()} className="mx-auto rounded-lg px-4 py-2 text-xs font-bold text-brand-500 disabled:opacity-60" disabled={feedStatus === "loading"}>{t("loadMore")}</button>}
           </div>
         ) : (
@@ -333,7 +337,9 @@ export function ListingsPage({
         language={language}
         onLanguageChange={onLanguageChange}
         t={t}
+        adminMode={adminMode}
         onBack={popView}
+        onListingRemoved={() => { setViewStack([]); setRetryKey((key) => key + 1); }}
         onSeller={(sellerId) => setViewStack((stack) => [...stack, { kind: "seller", sellerId }])}
         onListing={(listingId) => setViewStack((stack) => [...stack, { kind: "listing", listingId }])}
       />}

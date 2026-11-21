@@ -8,6 +8,8 @@ import { createListingCreateRouter, type ListingCreateRepository } from "./listi
 import { createListingLifecycleRouter, type ListingLifecycleRepository } from "./listings/lifecycle-route.ts";
 import { requireSession } from "./auth/session-token.ts";
 import { createRateLimiter } from "./rate-limit.ts";
+import { createAdminRouter, type AdminDashboardRepository } from "./admin/dashboard-route.ts";
+import { createAdminListingsRouter, type AdminListingRepository } from "./admin/listings-route.ts";
 
 export interface AppDependencies {
   auth?: AuthSessionDependencies;
@@ -15,6 +17,9 @@ export interface AppDependencies {
   listingReadRepository?: ListingReadRepository;
   listingCreateRepository?: ListingCreateRepository;
   listingLifecycleRepository?: ListingLifecycleRepository;
+  adminDashboardRepository?: AdminDashboardRepository;
+  adminListingRepository?: AdminListingRepository;
+  notifyListingSeller?: (telegramUserId: string) => Promise<void>;
 }
 
 export function createApp(
@@ -32,6 +37,12 @@ export function createApp(
   app.use("/api/v1", createListingReadRouter(dependencies.listingReadRepository));
   app.use("/api/v1", createListingCreateRouter(dependencies.listingCreateRepository));
   app.use("/api/v1", createListingLifecycleRouter(dependencies.listingLifecycleRepository));
+  app.use("/api/v1/admin/listings", createAdminListingsRouter(
+    dependencies.auth?.userRepository,
+    dependencies.adminListingRepository,
+    dependencies.notifyListingSeller,
+  ));
+  app.use("/api/v1/admin", createAdminRouter(dependencies.auth?.userRepository, dependencies.adminDashboardRepository));
 
   app.get("/health", (_req, res) => {
     res.status(200).json({ status: "ok" });

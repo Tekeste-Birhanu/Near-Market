@@ -2,10 +2,10 @@ import { forwardRef, type ComponentPropsWithoutRef, type ElementType, type React
 import type { Language, TranslationKey, Translator } from "../i18n/translations";
 
 export type Theme = "light" | "dark";
-export type MainPage = "listings" | "post" | "profile";
+export type MainPage = "dashboard" | "listings" | "post" | "profile";
 export type IconName =
   | "search" | "filter" | "list" | "plus" | "profile" | "send"
-  | "chevron" | "home" | "cube" | "image" | "trash" | "close" | "sun" | "moon" | "settings";
+  | "chevron" | "home" | "cube" | "image" | "trash" | "close" | "sun" | "moon" | "settings" | "users" | "dashboard";
 
 type SurfaceCardProps<T extends ElementType> = {
   as?: T;
@@ -65,6 +65,8 @@ const iconPaths: Record<IconName, ReactNode> = {
   settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" /></>,
   sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" /></>,
   moon: <path d="M20.8 13A8.5 8.5 0 0 1 11 3.2 8.5 8.5 0 1 0 20.8 13Z" />,
+  users: <><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="10" cy="7" r="4" /><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
+  dashboard: <><rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="5" rx="1.5" /><rect x="13" y="10" width="8" height="11" rx="1.5" /><rect x="3" y="13" width="8" height="8" rx="1.5" /></>,
 };
 
 export function Icon({ name, className = "h-5 w-5" }: { name: IconName; className?: string }) {
@@ -122,12 +124,15 @@ export function BottomNavigation({
   activePage,
   onPageChange,
   t,
+  adminMode = false,
 }: {
   activePage: MainPage;
   onPageChange: (page: MainPage) => void;
   t: (key: TranslationKey) => string;
+  adminMode?: boolean;
 }) {
   const pages: { id: MainPage; label: TranslationKey; icon: IconName }[] = [
+    ...(adminMode ? [{ id: "dashboard" as const, label: "dashboard" as const, icon: "dashboard" as const }] : []),
     { id: "listings", label: "listings", icon: "list" },
     { id: "post", label: "post", icon: "plus" },
     { id: "profile", label: "profile", icon: "profile" },
@@ -136,7 +141,7 @@ export function BottomNavigation({
   return (
     <nav
       aria-label={t("mainNavigation")}
-      className="fixed inset-x-0 bottom-0 z-20 mx-auto grid h-[calc(72px+env(safe-area-inset-bottom))] w-full max-w-[390px] grid-cols-3 border-t border-[var(--nm-divider)] bg-[color-mix(in_srgb,var(--nm-surface)_94%,transparent)] px-[18px] pb-[env(safe-area-inset-bottom)] pt-[7px] backdrop-blur-lg"
+      className={`fixed inset-x-0 bottom-0 z-20 mx-auto grid h-[calc(72px+env(safe-area-inset-bottom))] w-full max-w-[390px] ${adminMode ? "grid-cols-4" : "grid-cols-3"} border-t border-[var(--nm-divider)] bg-[color-mix(in_srgb,var(--nm-surface)_94%,transparent)] px-[18px] pb-[env(safe-area-inset-bottom)] pt-[7px] backdrop-blur-lg`}
     >
       {pages.map(({ id, label, icon }) => (
         <button

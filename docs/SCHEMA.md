@@ -98,7 +98,7 @@ PostgreSQL `CHECK` constraints enforce the type-specific listing rules and nonne
 - **INV-04 — Type-specific fields:** Item category and condition are present only for item listings; rental address is present only for house rental listings.
 - **INV-05 — Availability:** Items use Available/Sold; house rentals use Available/Unavailable.
 - **INV-06 — Photos:** Each listing has one to three validated images, stored in order. Listing creation or photo replacement and its image rows are handled transactionally.
-- **INV-07 — Admin totals:** Registered users are counted from `users`; total listings and most-listed item category are calculated from `listings`. Sold and unavailable listings remain in those counts unless deleted or removed.
+- **INV-07 — Admin totals:** Registered users are counted from `users`; total retained listings, item listings, house rentals, and item listing counts by category are calculated from `listings`. All listing totals include sold and unavailable records; category counts include item listings only and use descending count order with alphabetical tie order. Deleted or admin-removed listings are excluded. Item and rental counts sum to the total retained listing count.
 
 Use PostgreSQL constraints for uniqueness, foreign keys, allowed values, and field relationships. Enforce authentication, ownership, admin permissions, and the minimum photo count in the trusted backend.
 
