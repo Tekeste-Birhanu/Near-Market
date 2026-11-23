@@ -2,8 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import type { Language, Translator } from "../i18n/translations";
 import { AppearanceControls, BackButton, Icon, SurfaceCard, type Theme } from "../components/SharedUI";
 import { apiImageRequest, apiRequest } from "../api/client";
-import {
-  deleteListing,
+import { deleteListing,
   fetchListingDetails,
   fetchMyListings,
   toCardListing,
@@ -12,6 +11,7 @@ import {
   type ListingDetails,
   type ListingSummary,
 } from "../api/listings";
+import { invalidateImages } from "../api/image-cache";
 import { ListingImage } from "../components/ListingComponents";
 import type { SessionUser } from "../auth/session";
 
@@ -248,6 +248,7 @@ function MyListingsPanel({ userId, t, onDirtyChange }: { userId: string; t: Tran
     setNotice("");
     try {
       await deleteListing(listing.id);
+      invalidateImages(listing.images.map((img) => img.url.replace(/^\/api\/v1/, "")));
       setListings((current) => current.filter((entry) => entry.id !== listing.id));
       setNotice(t("listingDeleted"));
     } catch { setError(t("listingDeleteFailed")); }

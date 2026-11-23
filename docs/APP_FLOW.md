@@ -99,7 +99,7 @@ The marketplace Mini App opens on Listings with Items selected. The Admin Mini A
 
 ## 5. Shared states and edge cases
 
-- **Loading:** Keep the current page context while listings or details load.
+- **Loading:** Keep the current page context while listings or details load. All main pages remain mounted across navigation so feed data, search state, and scroll position are preserved when the user returns to a page within the same session.
 - **Empty:** Explain when a feed has no available listings. Keep the **Post** navigation item available.
 - **Error:** Show a clear error and allow retry. Preserve listing form details where feasible if submission fails.
 - **Unauthorized:** If a user without a Telegram username taps Post, block posting and explain the username requirement; keep browsing available.

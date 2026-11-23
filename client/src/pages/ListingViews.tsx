@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "../api/client";
+import { invalidateImages } from "../api/image-cache";
 import {
   fetchListingDetails,
   fetchAdminListingDetails,
@@ -12,7 +13,7 @@ import {
   type ListingSummary,
   type SellerProfile,
 } from "../api/listings";
-import { ListingCard, ListingImage } from "../components/ListingComponents";
+import { ListingCard, ListingCardSkeleton, ListingImage } from "../components/ListingComponents";
 import { AppearanceControls, BackButton, Icon, SurfaceCard, type Theme } from "../components/SharedUI";
 import type { Language, Translator } from "../i18n/translations";
 
@@ -122,6 +123,9 @@ function ListingDetailsView({
     setRemoveError(false);
     try {
       await removeAdminListing(listingId);
+      if (listing) {
+        invalidateImages(listing.images.map((img) => img.url.replace(/^\/api\/v1/, "")));
+      }
       onListingRemoved?.();
     } catch {
       setRemoveError(true);
@@ -141,7 +145,12 @@ function ListingDetailsView({
   return (
     <section className="fixed inset-0 z-40 mx-auto min-h-dvh w-full max-w-[390px] overflow-y-auto bg-[var(--nm-page)] text-[var(--nm-text)]" role="dialog" aria-modal="true" aria-label={t("listingDetails")}>
       <PageHeader title={t("listingDetails")} theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} t={t} onBack={onBack} backRef={backRef} />
-      {loading ? <p role="status" className="px-5 py-10 text-center text-sm text-[var(--nm-muted)]">{t("loadingDetails")}</p> : error ? (
+      {loading ? (
+        <>
+          <p role="status" className="sr-only">{t("loadingDetails")}</p>
+          <ListingDetailSkeleton />
+        </>
+      ) : error ? (
         <div className="flex min-h-[45vh] flex-col items-center justify-center gap-3 px-6 text-center">
           <h2 id="listing-detail-heading" className="text-base font-bold">{t(error === "unavailable" ? "listingUnavailable" : error === "notFound" ? "listingNotFound" : "detailsLoadFailed")}</h2>
           {error === "failed" && <button type="button" onClick={() => setRetryKey((key) => key + 1)} className="rounded-lg bg-[var(--nm-action)] px-4 py-2 text-xs font-bold text-white">{t("retry")}</button>}
@@ -269,7 +278,12 @@ function SellerProfileView({
   return (
     <section className="fixed inset-0 z-40 mx-auto min-h-dvh w-full max-w-[390px] overflow-y-auto bg-[var(--nm-page)] text-[var(--nm-text)]" role="dialog" aria-modal="true" aria-label={t("sellerProfile")}>
       <PageHeader title={t("sellerProfile")} theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} t={t} onBack={onBack} backRef={backRef} />
-      {loading ? <p role="status" className="px-5 py-10 text-center text-sm text-[var(--nm-muted)]">{t("loadingSeller")}</p> : error ? (
+      {loading ? (
+        <>
+          <p role="status" className="sr-only">{t("loadingSeller")}</p>
+          <SellerProfileSkeleton />
+        </>
+      ) : error ? (
         <div className="flex min-h-[45vh] flex-col items-center justify-center gap-3 px-6 text-center">
           <p role="alert" className="text-sm text-[var(--nm-muted)]">{t("sellerLoadFailed")}</p>
           <button type="button" onClick={() => setRetryKey((key) => key + 1)} className="rounded-lg bg-[var(--nm-action)] px-4 py-2 text-xs font-bold text-white">{t("retry")}</button>
@@ -290,6 +304,61 @@ function SellerProfileView({
         </main>
       ) : null}
     </section>
+  );
+}
+
+function ListingDetailSkeleton() {
+  return (
+    <article aria-hidden="true">
+      {/* Photo area — matches aspect-[4/3] */}
+      <div className="animate-shimmer aspect-[4/3] w-full bg-[var(--nm-hover)]" />
+      <div className="space-y-4 px-4 pt-4">
+        {/* Badge + title + price */}
+        <div className="space-y-2">
+          <div className="animate-shimmer h-3 w-16 rounded-md bg-[var(--nm-hover)]" />
+          <div className="animate-shimmer h-5 w-3/4 rounded-md bg-[var(--nm-hover)]" />
+          <div className="animate-shimmer h-6 w-1/3 rounded-md bg-[var(--nm-hover)]" />
+        </div>
+        {/* Description block */}
+        <div className="space-y-2">
+          <div className="animate-shimmer h-3 w-20 rounded-md bg-[var(--nm-hover)]" />
+          <div className="animate-shimmer h-3 w-full rounded-md bg-[var(--nm-hover)]" />
+          <div className="animate-shimmer h-3 w-5/6 rounded-md bg-[var(--nm-hover)]" />
+          <div className="animate-shimmer h-3 w-4/6 rounded-md bg-[var(--nm-hover)]" />
+        </div>
+        {/* Seller card */}
+        <SurfaceCard className="p-3">
+          <div className="animate-shimmer mb-3 h-3 w-10 rounded-md bg-[var(--nm-hover)]" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-1.5">
+              <div className="animate-shimmer h-3.5 w-28 rounded-md bg-[var(--nm-hover)]" />
+              <div className="animate-shimmer h-3 w-20 rounded-md bg-[var(--nm-hover)]" />
+            </div>
+            <div className="animate-shimmer h-4 w-4 rounded bg-[var(--nm-hover)]" />
+          </div>
+          <div className="animate-shimmer mt-3 h-10 w-full rounded-xl bg-[var(--nm-hover)]" />
+        </SurfaceCard>
+      </div>
+    </article>
+  );
+}
+
+function SellerProfileSkeleton() {
+  return (
+    <main aria-hidden="true" className="px-4 pb-10 pt-4">
+      {/* Name card */}
+      <SurfaceCard className="p-4">
+        <div className="animate-shimmer h-4 w-32 rounded-md bg-[var(--nm-hover)]" />
+        <div className="animate-shimmer mt-2 h-3 w-20 rounded-md bg-[var(--nm-hover)]" />
+      </SurfaceCard>
+      {/* Listings heading */}
+      <div className="animate-shimmer mb-3 mt-5 h-3.5 w-28 rounded-md bg-[var(--nm-hover)]" />
+      {/* Two listing card skeletons */}
+      <div className="grid gap-2">
+        <ListingCardSkeleton />
+        <ListingCardSkeleton />
+      </div>
+    </main>
   );
 }
 

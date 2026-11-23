@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AppearanceControls, Icon, SurfaceCard, type Theme } from "../components/SharedUI";
-import { FilterDropdown, ListingCard, ListingDetailsDialog } from "../components/ListingComponents";
+import { AppearanceControls, BrandMark, Icon, SurfaceCard, type Theme } from "../components/SharedUI";
+import { FilterDropdown, ListingCard, ListingCardSkeleton, ListingDetailsDialog } from "../components/ListingComponents";
 import { previewListings, type ListingType, type PreviewListing } from "../data/listings";
 import type { Language, Translator } from "../i18n/translations";
 import { apiRequest } from "../api/client";
@@ -160,7 +160,7 @@ export function ListingsPage({
           {adminMode
             ? <h1 className="text-xl font-bold leading-6 text-[var(--nm-text)]">{t("listings")}</h1>
             : <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-brand-500 text-lg font-extrabold tracking-tight text-white shadow-[0_8px_24px_rgba(22,134,200,0.18)]">N</div>
+              <BrandMark size="lg" />
               <div className="min-w-0">
                 <h1 className="truncate text-xl font-bold leading-6 tracking-tight">Near Market</h1>
               </div>
@@ -307,7 +307,11 @@ export function ListingsPage({
           />
         </div>
         {feedStatus === "loading" && !previewMode ? (
-          <div role="status" className="py-8 text-center text-sm text-[var(--nm-muted)]">{t("loadingListings")}</div>
+          <div className="grid gap-2" role="status" aria-label={t("loadingListings")}>
+            <ListingCardSkeleton />
+            <ListingCardSkeleton />
+            <ListingCardSkeleton />
+          </div>
         ) : feedStatus === "error" && !previewMode ? (
           <div className="flex flex-col items-center gap-3 py-8 text-center">
             <p role="alert" className="text-sm text-[var(--nm-muted)]">{feedError || t("feedLoadFailed")}</p>

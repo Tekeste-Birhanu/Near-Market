@@ -169,23 +169,37 @@ Add admin-only access, marketplace metrics, listing review, removal, and seller 
 - [x] Handle notification failures without restoring removed listings or logging private data.
 - [x] Verify API authorization, removal, and mocked Telegram notification behavior; do not log private data.
 
+**T24 - Cache listing images**
+
+- [x] Reuse fetched image data across views and avoid duplicate requests.
+- [x] Clear cached images when the session changes, and invalidate them when a listing is removed.
+- [x] Keep the cache within a fixed memory limit.
+- [x] Verify reuse, duplicate request handling, memory limits, invalidation, and clearing with tests.
+
+**T25 - Load pages and images on demand**
+
+- [x] Load each page the first time it is opened.
+- [x] Preserve page state when navigating away and back.
+- [x] Load listing images as they approach the visible area, with a fallback for browsers that lack the required observer.
+- [x] Verify deferred page requests, state preservation, and deferred image requests with tests.
+
 ## M4 - Release readiness
 
 Verify complete journeys, review security and accessibility, and finalize release documentation.
 
-**T24 - Verify end-to-end user journeys**
+**T26 - Verify end-to-end user journeys**
 
 - [ ] Verify browse/contact, post/manage, admin dashboard, removal, and seller notification for both listing types.
 - [ ] Check loading, empty, validation, unavailable, unauthorized, and recoverable error states.
 - [ ] Run configured test suites and record manual Telegram Mini App checks accurately.
 
-**T25 - Review security, privacy, and accessibility**
+**T27 - Review security, privacy, and accessibility**
 
 - [ ] Verify server-side authentication, ownership, admin authorization, input validation, and image handling.
 - [ ] Confirm phone numbers are absent from feeds/profile pages and secrets/raw `initData` are absent from logs.
 - [ ] Check semantic labels, keyboard use, visible focus, descriptive alternative text for images, reduced motion, pressed/selected/disabled states, and contrast in both app themes.
 
-**T26 - Finalize developer and release documentation**
+**T28 - Finalize developer and release documentation**
 
 - [ ] Add verified local setup, environment, test, migration, and run instructions to the README; keep the `docs/API.md` link.
 - [ ] Confirm `.env.example` matches configuration and contains no secrets.

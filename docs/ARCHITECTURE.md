@@ -43,7 +43,7 @@ The project is kept in one repository with `client/`, `server/`, and `docs/` fol
 
 | Module / area | Responsibility | Important dependencies or boundaries |
 |---|---|---|
-| Marketplace Mini App | Browse, search, filter, post, and manage listings; show seller profiles and contact options. | React + TypeScript; accesses data through the shared API. |
+| Marketplace Mini App | Browse, search, filter, post, and manage listings; show seller profiles and contact options. All main pages (Listings, Post, Profile) are kept mounted across bottom-navigation taps using the HTML `hidden` attribute so feed state and scroll position are preserved within a session. | React + TypeScript; accesses data through the shared API. |
 | Marketplace bot | Open the Marketplace Mini App and support Telegram-related interactions. | Telegraf instance using the Telegram Bot API; runs in the shared Node.js backend service. |
 | Admin Mini App and bot | Provide the same Listings page (with Items and House rentals tabs), Post, and Profile pages as the Marketplace Mini App, plus an admin Dashboard; allow admins to remove listings. | Separate Telegraf instance using the Telegram Bot API; the admin bot launches the Admin Mini App. Both use the shared Node.js backend service. |
 | Backend service | Provide the REST API, validate Telegram identity, enforce ownership and admin permissions, validate listing data and images, handle both bots, and coordinate persistence. | Node.js + TypeScript + Express; accesses PostgreSQL through Prisma ORM 7. |
@@ -61,7 +61,8 @@ The project is kept in one repository with `client/`, `server/`, and `docs/` fol
 - **D-08 — Single project repository:** Keep the frontend, backend, and project documentation in one repository under `client/`, `server/`, and `docs/` folders.
 - **D-09 — Vite frontend tooling:** Use Vite to build and serve the React + TypeScript Mini Apps.
 - **D-10 — Telegraf for bot integrations:** Use Telegraf for both bots in the shared Node.js + TypeScript backend. The React Mini Apps use Telegram's Web App API separately; Telegraf handles bot commands and updates and does not replace the Mini App API.
-- **Bot startup:** Keep marketplace bot startup opt-in for local development. When enabled, require a server-side bot token and an HTTPS Mini App URL reachable from Telegram; production update transport remains deferred until hosting is selected.
+- **D-11 — Client-side lazy page mounting:** Pages are mounted the first time they are visited instead of all at once. Once mounted, pages use the HTML `hidden` attribute to preserve feed data, search filters, and scroll position across navigation. Pages remain alive in memory for the session lifetime.
+- **D-12 — Client image blob cache:** Authenticated listing images are cached in a module-level LRU store (`MAX_CACHE_BYTES = 32 MiB`) keyed by API path. Concurrent requests for the same path are deduplicated to one in-flight fetch. In-flight requests that are invalidated or cleared do not repopulate the cache when they resolve, and new requests for invalidated paths start fresh instead of sharing stale in-flight fetches. Images are loaded lazily when near the viewport using `IntersectionObserver` with a 200px root margin. The cache is cleared on session change/expiry and invalidated on listing deletion. Blob data (not blob URLs) is cached; components still create and revoke `URL.createObjectURL` values on mount/unmount.
 
 ## 6. Data and integration flow
 

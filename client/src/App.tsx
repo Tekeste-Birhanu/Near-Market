@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "./api/client";
+import { clearImageCache } from "./api/image-cache";
 import { BottomNavigation, type MainPage, type Theme } from "./components/SharedUI";
 import { usePreferences } from "./hooks/usePreferences";
 import { ListingsPage } from "./pages/ListingsPage";
@@ -20,7 +21,7 @@ type AuthState =
   | { status: "error"; message: string }
   | { status: "authenticated"; session: Session };
 
-function DesignPreview({
+export function DesignPreview({
   activePage,
   onPageChange,
   theme,
@@ -54,24 +55,42 @@ function DesignPreview({
   adminMode: boolean;
 }) {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [visitedPages, setVisitedPages] = useState<Set<MainPage>>(() => new Set([activePage]));
+
   const reportPageDirty = useCallback((dirty: boolean) => setHasUnsavedChanges(dirty), []);
   const handlePageChange = useCallback((page: MainPage) => {
     if ((activePage === "post" || activePage === "profile") && page !== activePage && hasUnsavedChanges && !window.confirm(t("discardListingChangesConfirm"))) return;
     if (activePage !== page) setHasUnsavedChanges(false);
+    setVisitedPages((prev) => new Set(prev).add(page));
     onPageChange(page);
   }, [activePage, hasUnsavedChanges, onPageChange, t]);
 
+  const handleListingPublished = useCallback((listingId: string) => {
+    setVisitedPages((prev) => new Set(prev).add("listings"));
+    onListingPublished(listingId);
+  }, [onListingPublished]);
+
   return (
     <div className="mx-auto min-h-dvh w-full max-w-[390px] bg-[var(--nm-bg)] text-[var(--nm-text)]">
-      {activePage === "listings" && (
-        <ListingsPage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} t={t} previewMode={previewMode} onPost={() => handlePageChange("post")} newListingId={newListingId} onNewListingOpened={onNewListingOpened} adminMode={adminMode} />
+      {visitedPages.has("listings") && (
+        <div hidden={activePage !== "listings"}>
+          <ListingsPage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} t={t} previewMode={previewMode} onPost={() => handlePageChange("post")} newListingId={newListingId} onNewListingOpened={onNewListingOpened} adminMode={adminMode} />
+        </div>
       )}
-      {adminMode && activePage === "dashboard" && <AdminDashboardPage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} t={t} />}
-      {activePage === "post" && (
-        <PostPage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} user={user} onDirtyChange={reportPageDirty} onPublished={onListingPublished} t={t} />
+      {adminMode && visitedPages.has("dashboard") && (
+        <div hidden={activePage !== "dashboard"}>
+          <AdminDashboardPage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} t={t} isActive={activePage === "dashboard"} />
+        </div>
       )}
-      {activePage === "profile" && (
-        <ProfilePage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} user={user} onUserChange={onUserChange} onDirtyChange={reportPageDirty} t={t} />
+      {visitedPages.has("post") && (
+        <div hidden={activePage !== "post"}>
+          <PostPage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} user={user} onDirtyChange={reportPageDirty} onPublished={handleListingPublished} t={t} />
+        </div>
+      )}
+      {visitedPages.has("profile") && (
+        <div hidden={activePage !== "profile"}>
+          <ProfilePage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} user={user} onUserChange={onUserChange} onDirtyChange={reportPageDirty} t={t} />
+        </div>
       )}
       {postSuccessNotice && <p role="status" className="fixed left-4 right-4 top-[max(12px,env(safe-area-inset-top))] z-[60] mx-auto max-w-[358px] rounded-xl bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow-lg">{postSuccessNotice}</p>}
       <BottomNavigation activePage={activePage} onPageChange={handlePageChange} t={t} adminMode={adminMode} />
@@ -111,7 +130,10 @@ export function App() {
       const existingSession = readStoredSession();
       try {
         const session = await createSession(initData);
-        if (active) setAuth({ status: "authenticated", session });
+        if (active) {
+          clearImageCache();
+          setAuth({ status: "authenticated", session });
+        }
       } catch (error) {
         if (!active) return;
         if (existingSession) {

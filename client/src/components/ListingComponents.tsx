@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { PreviewListing } from "../data/listings";
 import type { TranslationKey } from "../i18n/translations";
 import { apiImageRequest } from "../api/client";
+import { getCachedImage } from "../api/image-cache";
 import { Icon, SurfaceCard } from "./SharedUI";
 
 export type FilterOption = { value: string; label: string };
@@ -14,30 +15,66 @@ export function ListingImage({ url, alt, className, t }: {
 }) {
   const isProtectedListingImage = url.startsWith("/listings/") || url.startsWith("/admin/listings/");
   const [source, setSource] = useState(isProtectedListingImage ? "" : url);
+  const [shouldLoad, setShouldLoad] = useState(!isProtectedListingImage);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const placeholderRef = useRef<HTMLDivElement | null>(null);
+
+  // Defer loading protected images until they're near the viewport.
   useEffect(() => {
+    if (!isProtectedListingImage || shouldLoad) return;
+
+    const target = imgRef.current || placeholderRef.current;
+    if (!target) return;
+
+    // Fallback for browsers without IntersectionObserver: load immediately.
+    if (typeof IntersectionObserver === "undefined") {
+      setShouldLoad(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }, // Load when within 200px of viewport
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [isProtectedListingImage, shouldLoad]);
+
+  useEffect(() => {
+    if (!shouldLoad) return;
+
     let active = true;
     let objectUrl: string | undefined;
+
     if (!isProtectedListingImage) {
       setSource(url);
       return;
     }
+
     setSource("");
-    void apiImageRequest(url).then((blob) => {
+    void getCachedImage(url, apiImageRequest).then((blob) => {
       if (!active) return;
       objectUrl = URL.createObjectURL(blob);
       setSource(objectUrl);
     }).catch(() => {
       if (active) setSource("");
     });
+
     return () => {
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [url, isProtectedListingImage]);
+  }, [url, isProtectedListingImage, shouldLoad]);
 
   return source
-    ? <img src={source} alt={alt} className={className} loading="lazy" />
-    : <div role="img" aria-label={t("imageUnavailable")} className={`${className} bg-[var(--nm-hover)]`} />;
+    ? <img ref={imgRef} src={source} alt={alt} className={className} loading="lazy" />
+    : <div ref={placeholderRef} role="img" aria-label={t("imageUnavailable")} className={`${className} animate-shimmer bg-[var(--nm-hover)]`} />;
 }
 
 export function FilterDropdown({
@@ -245,5 +282,28 @@ export function ListingDetailsDialog({
         </a>}
       </section>
     </div>
+  );
+}
+
+/** Shimmer placeholder matching the exact dimensions of a ListingCard. */
+export function ListingCardSkeleton() {
+  return (
+    <SurfaceCard as="div" className="flex h-[124px] min-w-0 gap-2.5 overflow-hidden p-2" aria-hidden="true">
+      {/* Square image block — same w-[31%] as the real card image */}
+      <div className="animate-shimmer aspect-square w-[31%] shrink-0 self-center rounded-[10px] bg-[var(--nm-hover)]" />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 py-0.5 pr-0.5">
+        {/* Title line */}
+        <div className="animate-shimmer h-3.5 w-4/5 rounded-md bg-[var(--nm-hover)]" />
+        {/* Second title line (shorter) */}
+        <div className="animate-shimmer h-3.5 w-3/5 rounded-md bg-[var(--nm-hover)]" />
+        {/* Price line */}
+        <div className="animate-shimmer mt-0.5 h-3 w-2/5 rounded-md bg-[var(--nm-hover)]" />
+        {/* Button row */}
+        <div className="mt-auto flex gap-[7px]">
+          <div className="animate-shimmer h-7 w-16 rounded-[10px] bg-[var(--nm-hover)]" />
+          <div className="animate-shimmer h-7 w-20 rounded-[10px] bg-[var(--nm-hover)]" />
+        </div>
+      </div>
+    </SurfaceCard>
   );
 }

@@ -26,46 +26,52 @@ afterEach(() => {
 describe("Telegram client authentication", () => {
   it("exchanges only Telegram WebApp.initData and saves the returned token", async () => {
     window.Telegram = { WebApp: { initData: "signed-telegram-init-data" } };
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify(testSession), { status: 200 }))
-      .mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 })));
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url === "/api/v1/auth/session") return Promise.resolve(new Response(JSON.stringify(testSession), { status: 200 }));
+      if (url.startsWith("/api/v1/me/listings")) return Promise.resolve(new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 }));
+      if (url === "/api/v1/me") return Promise.resolve(new Response(JSON.stringify(testSession.user), { status: 200 }));
+      return Promise.resolve(new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 }));
+    });
     vi.stubGlobal("fetch", fetchMock);
 
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Near Market" })).toBeInTheDocument();
     await screen.findByText("No listings found");
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[0][0]).toBe("/api/v1/auth/session");
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({
-      initData: "signed-telegram-init-data",
-    });
+    const sessionCall = fetchMock.mock.calls.find((call: unknown[]) => call[0] === "/api/v1/auth/session");
+    expect(sessionCall).toBeDefined();
+    expect(JSON.parse((sessionCall![1] as RequestInit).body as string)).toEqual({ initData: "signed-telegram-init-data" });
 
     await apiRequest("/me");
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(fetchMock.mock.calls[1][0]).toBe("/api/v1/listings?type=ITEM&limit=20");
-    expect(fetchMock.mock.calls[1][1].headers.get("Authorization")).toBe("Bearer signed-test-token");
-    expect(fetchMock.mock.calls[2][1].headers.get("Authorization")).toBe("Bearer signed-test-token");
+    const listingCall = fetchMock.mock.calls.find((call: unknown[]) => call[0] === "/api/v1/listings?type=ITEM&limit=20");
+    expect(listingCall).toBeDefined();
+    expect((listingCall![1] as { headers: Headers }).headers.get("Authorization")).toBe("Bearer signed-test-token");
+    const meCall = fetchMock.mock.calls.find((call: unknown[]) => call[0] === "/api/v1/me");
+    expect(meCall).toBeDefined();
+    expect((meCall![1] as { headers: Headers }).headers.get("Authorization")).toBe("Bearer signed-test-token");
   });
 
   it("refreshes an unexpired session from current Telegram initData", async () => {
     window.Telegram = { WebApp: { initData: "current-telegram-init-data" } };
     saveSession(testSession);
     const refreshedSession = { ...testSession, user: { ...testSession.user, telegramUsername: "updated_hana" } };
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify(refreshedSession), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 }));
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url === "/api/v1/auth/session") return Promise.resolve(new Response(JSON.stringify(refreshedSession), { status: 200 }));
+      if (url === "/api/v1/me") return Promise.resolve(new Response(JSON.stringify(refreshedSession.user), { status: 200 }));
+      return Promise.resolve(new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 }));
+    });
     vi.stubGlobal("fetch", fetchMock);
 
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Near Market" })).toBeInTheDocument();
-    expect(await screen.findByText("No listings found")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[0][0]).toBe("/api/v1/auth/session");
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({ initData: "current-telegram-init-data" });
+    await screen.findByText("No listings found");
+    const sessionCall = fetchMock.mock.calls.find((call: unknown[]) => call[0] === "/api/v1/auth/session");
+    expect(sessionCall).toBeDefined();
+    expect(JSON.parse((sessionCall![1] as RequestInit).body as string)).toEqual({ initData: "current-telegram-init-data" });
     expect(JSON.parse(sessionStorage.getItem("near-market.session") as string).user.telegramUsername).toBe("updated_hana");
-    expect(fetchMock.mock.calls[1][0]).toBe("/api/v1/listings?type=ITEM&limit=20");
+    const listingCall = fetchMock.mock.calls.find((call: unknown[]) => call[0] === "/api/v1/listings?type=ITEM&limit=20");
+    expect(listingCall).toBeDefined();
   });
 
   it("exchanges initData again when the cached session has expired", async () => {
@@ -77,8 +83,9 @@ describe("Telegram client authentication", () => {
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "Near Market" })).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body as string)).toEqual({
+    const sessionCall = fetchMock.mock.calls.find((call: unknown[]) => call[0] === "/api/v1/auth/session");
+    expect(sessionCall).toBeDefined();
+    expect(JSON.parse((sessionCall![1] as RequestInit).body as string)).toEqual({
       initData: "fresh-telegram-init-data",
     });
   });

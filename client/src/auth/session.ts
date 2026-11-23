@@ -1,4 +1,5 @@
 import { apiRequest } from "../api/client";
+import { clearImageCache } from "../api/image-cache";
 
 export interface SessionUser {
   id: string;
@@ -61,6 +62,7 @@ export function saveSession(session: Session, storage: Storage = window.sessionS
 
 export function clearStoredSession(storage: Storage = window.sessionStorage): void {
   storage.removeItem(SESSION_STORAGE_KEY);
+  clearImageCache();
 }
 
 export async function createSession(initData: string): Promise<Session> {

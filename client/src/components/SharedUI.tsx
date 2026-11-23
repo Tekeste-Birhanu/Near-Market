@@ -5,7 +5,7 @@ export type Theme = "light" | "dark";
 export type MainPage = "dashboard" | "listings" | "post" | "profile";
 export type IconName =
   | "search" | "filter" | "list" | "plus" | "profile" | "send"
-  | "chevron" | "home" | "cube" | "image" | "trash" | "close" | "sun" | "moon" | "settings" | "users" | "dashboard";
+  | "chevron" | "home" | "cube" | "image" | "trash" | "close" | "sun" | "moon" | "settings" | "users" | "dashboard" | "refresh";
 
 type SurfaceCardProps<T extends ElementType> = {
   as?: T;
@@ -19,6 +19,28 @@ export function SurfaceCard<T extends ElementType = "section">({
 }: SurfaceCardProps<T>) {
   const Component = as ?? "section";
   return <Component className={`rounded-2xl border border-[var(--nm-card-border)] bg-[var(--nm-surface)] ${className}`} {...props} />;
+}
+
+/**
+ * Brand mark placeholder — renders the "N" letterform at two sizes.
+ * Replace the inner content with an <img> when the final logo is ready;
+ * the outer container dimensions and className stay the same.
+ *
+ * size="lg"  — 42×42px, used in the marketplace Listings header
+ * size="sm"  — 36×36px, used in the Admin Dashboard header
+ */
+export function BrandMark({ size = "lg" }: { size?: "lg" | "sm" }) {
+  const dim = size === "lg" ? "h-[42px] w-[42px]" : "h-9 w-9";
+  const text = size === "lg" ? "text-lg font-extrabold tracking-tight" : "text-base font-bold";
+  const shadow = size === "lg" ? " shadow-[0_8px_24px_rgba(22,134,200,0.18)]" : "";
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex shrink-0 items-center justify-center rounded-xl bg-brand-500 text-white${shadow} ${dim} ${text}`}
+    >
+      N
+    </span>
+  );
 }
 
 type BackButtonProps = {
@@ -67,6 +89,7 @@ const iconPaths: Record<IconName, ReactNode> = {
   moon: <path d="M20.8 13A8.5 8.5 0 0 1 11 3.2 8.5 8.5 0 1 0 20.8 13Z" />,
   users: <><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="10" cy="7" r="4" /><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
   dashboard: <><rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="5" rx="1.5" /><rect x="13" y="10" width="8" height="11" rx="1.5" /><rect x="3" y="13" width="8" height="8" rx="1.5" /></>,
+  refresh: <><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></>,
 };
 
 export function Icon({ name, className = "h-5 w-5" }: { name: IconName; className?: string }) {
