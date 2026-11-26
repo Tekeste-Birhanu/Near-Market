@@ -48,7 +48,7 @@ The marketplace Mini App opens on Listings with Items selected. The Admin Mini A
 - **Steps:**
   1. If the Telegram username is missing, posting is blocked and the seller is told a username is required so buyers can contact them.
   2. Before the first form, show the prohibited-listings notice once per authenticated user on that device; no separate acknowledgment checkbox is required.
-  3. Show two vertically stacked choices: Sell an item (Electronics, Clothing, or Other; new or used) and Rent out a house (whole houses only). The rental choice notes monthly rent and the seller-entered address.
+  3. Show two vertically stacked choices: Sell an item (Electronics, Clothing, Furniture, or Other; new or used) and Rent out a house (whole houses only). The rental choice notes monthly rent and the seller-entered address.
   4. Open the matching form.
   5. For an item, collect its title, category, and New/Used condition. For a whole-house rental, collect the seller-entered address and monthly rent in ETB without asking for a title. Both forms collect a description, a price or Contact for price choice, and one to three photos. Any phone number is managed separately in Profile > Settings and applies to all of the seller's listings.
   6. The listing appears immediately after successful submission.
@@ -76,7 +76,7 @@ The marketplace Mini App opens on Listings with Items selected. The Admin Mini A
 - **Entry point:** Admin opens the separate admin bot, which launches the Admin Mini App.
 - **Preconditions / access:** The user is authorized as an admin.
 - **Steps:**
-  1. The Admin Mini App opens on the Dashboard tab, showing all registered users (buyers and sellers), total retained listings, item listings, house rentals, and retained item listing counts for Electronics, Clothing, and Other in descending count order.
+  1. The Admin Mini App opens on the Dashboard tab, showing all registered users (buyers and sellers), total retained listings, item listings, house rentals, and retained item listing counts for Electronics, Clothing, Furniture, and Other in descending count order.
   2. The admin navigates to Items or House rentals and browses or searches listings, as other users do.
   3. The admin opens the listing details, chooses to remove it there, and confirms the action.
   4. The listing is removed and its seller is notified on Telegram without a reason being included.

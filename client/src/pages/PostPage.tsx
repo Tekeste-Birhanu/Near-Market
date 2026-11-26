@@ -22,7 +22,7 @@ type PostListingType = "item" | "house-rental";
 type ItemDraft = {
   title: string;
   description: string;
-  category: "" | "ELECTRONICS" | "CLOTHING" | "OTHER";
+  category: "" | "ELECTRONICS" | "CLOTHING" | "FURNITURE" | "OTHER";
   condition: "" | "NEW" | "USED";
   priceAmount: string;
   contactForPrice: boolean;
@@ -47,7 +47,7 @@ function readItemDraft(userId: string): ItemDraft {
     return {
       title: typeof record.title === "string" ? record.title.slice(0, 120) : "",
       description: typeof record.description === "string" ? record.description.slice(0, 5000) : "",
-      category: record.category === "ELECTRONICS" || record.category === "CLOTHING" || record.category === "OTHER" ? record.category : "",
+      category: record.category === "ELECTRONICS" || record.category === "CLOTHING" || record.category === "FURNITURE" || record.category === "OTHER" ? record.category : "",
       condition: record.condition === "NEW" || record.condition === "USED" ? record.condition : "",
       priceAmount: typeof record.priceAmount === "string" ? record.priceAmount.slice(0, 13) : "",
       contactForPrice: record.contactForPrice === true,
@@ -155,7 +155,7 @@ function ItemListingForm({ userId, t, onDirtyChange, onPublished, onBack }: {
       const created = await createItemListing({
         title: draft.title.trim(),
         description: draft.description.trim(),
-        category: draft.category as "ELECTRONICS" | "CLOTHING" | "OTHER",
+        category: draft.category as "ELECTRONICS" | "CLOTHING" | "FURNITURE" | "OTHER",
         condition: draft.condition as "NEW" | "USED",
         priceAmount: draft.contactForPrice ? "" : draft.priceAmount.trim(),
         images,
@@ -207,6 +207,7 @@ function ItemListingForm({ userId, t, onDirtyChange, onPublished, onBack }: {
               { value: "", label: t("selectCategory") },
               { value: "ELECTRONICS", label: t("electronics") },
               { value: "CLOTHING", label: t("clothing") },
+              { value: "FURNITURE", label: t("furniture") },
               { value: "OTHER", label: t("other") },
             ]}
           />

@@ -41,7 +41,7 @@
 | `listing_type` | `listing_type` enum | Yes | `ITEM` or `HOUSE_RENTAL`; drives the separate feed and form. |
 | `title` | TEXT | Yes | Seller-entered item name. For house rentals, the server stores the required rental address here as an internal compatibility/search value; rental clients do not enter or display it as a title. |
 | `description` | TEXT | Yes | Seller-entered text, kept in the language supplied. |
-| `item_category` | `item_category` enum | No | `ELECTRONICS`, `CLOTHING`, or `OTHER`; required for items and empty for house rentals. |
+| `item_category` | `item_category` enum | No | `ELECTRONICS`, `CLOTHING`, `FURNITURE`, or `OTHER`; required for items and empty for house rentals. |
 | `item_condition` | `item_condition` enum | No | `NEW` or `USED`; required for items and empty for house rentals. |
 | `rental_address` | TEXT | No | Seller-entered address; required for house rentals and empty for items. |
 | `price_amount` | NUMERIC(12,2) | No | ETB amount. `NULL` means Contact for price; otherwise must be zero or greater. |
@@ -78,7 +78,7 @@
 | Enum | Values |
 |---|---|
 | `listing_type` | `ITEM`, `HOUSE_RENTAL` |
-| `item_category` | `ELECTRONICS`, `CLOTHING`, `OTHER` |
+| `item_category` | `ELECTRONICS`, `CLOTHING`, `FURNITURE`, `OTHER` |
 | `item_condition` | `NEW`, `USED` |
 | `listing_status` | `AVAILABLE`, `SOLD`, `UNAVAILABLE` |
 

@@ -190,7 +190,8 @@ Add admin-only access, marketplace metrics, listing review, removal, seller noti
 - [x] Hide blocked users' listings and profiles from other users, and make the marketplace bot show blocked users a suspension message in English and Amharic.
 - [x] Add the Admin Mini App Users tab with paginated user rows, debounced search, All / Active / Blocked filters, status, and confirmed block/unblock actions.
 - [x] Verify blocked-user access, atomic block and unblock behavior, bot responses, user-list filtering and pagination, seller visibility, authorization, and core Users tab states with tests.
-- [ ] Apply the migration to a clean database and verify the migrated schema.
+- [x] Apply the migration to a clean database and verify the migrated schema.
+
 ## M4 - Release readiness
 
 Verify complete journeys, review security and accessibility, and finalize release documentation.

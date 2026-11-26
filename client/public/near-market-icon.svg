@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Near Market</title>
+  <rect width="512" height="512" rx="112" fill="#075b51" />
+  <path d="M139 226h234v177H139z" fill="#f8f7f4" />
+  <path d="M112 225 146 126h220l34 99H112Z" fill="#63d4b5" />
+  <path d="M112 225c0 25 20 45 45 45s45-20 45-45c0 25 20 45 45 45s45-20 45-45c0 25 20 45 45 45s45-20 45-45" fill="#087567" />
+  <path d="M222 403V303h68v100" fill="#075b51" />
+</svg>

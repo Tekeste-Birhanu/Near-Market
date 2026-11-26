@@ -265,6 +265,7 @@ export function ListingsPage({
                       { value: "All categories", label: t("allCategories") },
                       { value: "Electronics", label: t("electronics") },
                       { value: "Clothing", label: t("clothing") },
+                      { value: "Furniture", label: t("furniture") },
                       { value: "Other", label: t("other") },
                     ]}
                   />

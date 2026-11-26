@@ -68,7 +68,7 @@ export function parseListingFields(body: unknown): ParsedFields | undefined {
 
   if (fields.type === "ITEM") {
     if (typeof fields.title !== "string" || !fields.title.trim() || fields.title.trim().length > 120) return undefined;
-    if (fields.category !== "ELECTRONICS" && fields.category !== "CLOTHING" && fields.category !== "OTHER") return undefined;
+    if (fields.category !== "ELECTRONICS" && fields.category !== "CLOTHING" && fields.category !== "FURNITURE" && fields.category !== "OTHER") return undefined;
     if (fields.condition !== "NEW" && fields.condition !== "USED") return undefined;
     return {
       listingType: "ITEM",

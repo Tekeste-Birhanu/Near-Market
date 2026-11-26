@@ -5,7 +5,7 @@ const PRICE_PATTERN = /^\d{1,10}(?:\.\d{1,2})?$/;
 
 export type ListingFeedType = "ITEM" | "HOUSE_RENTAL";
 export type ListingSort = "NEWEST" | "OLDEST";
-export type ListingCategory = "ELECTRONICS" | "CLOTHING" | "OTHER";
+export type ListingCategory = "ELECTRONICS" | "CLOTHING" | "FURNITURE" | "OTHER";
 export type ListingCondition = "NEW" | "USED";
 
 export interface ListingCursor {
@@ -139,7 +139,7 @@ export function createListingFeedRouter(repository?: ListingFeedRepository) {
       return;
     }
     const categoryValue = raw.category === undefined ? undefined : queryString(raw.category);
-    if (raw.category !== undefined && (typeValue !== "ITEM" || !["ELECTRONICS", "CLOTHING", "OTHER"].includes(categoryValue ?? ""))) {
+    if (raw.category !== undefined && (typeValue !== "ITEM" || !["ELECTRONICS", "CLOTHING", "FURNITURE", "OTHER"].includes(categoryValue ?? ""))) {
       sendValidationError(res);
       return;
     }

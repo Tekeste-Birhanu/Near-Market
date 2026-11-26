@@ -18,7 +18,7 @@ export type AdminListingQuery = {
   type: "ITEM" | "HOUSE_RENTAL";
   sort: "NEWEST" | "OLDEST";
   q?: string;
-  category?: "ELECTRONICS" | "CLOTHING" | "OTHER";
+  category?: "ELECTRONICS" | "CLOTHING" | "FURNITURE" | "OTHER";
   condition?: "NEW" | "USED";
   minPrice?: string;
   maxPrice?: string;
@@ -52,7 +52,7 @@ function parseQuery(raw: Record<string, unknown>): AdminListingQuery | undefined
   if (raw.q !== undefined && typeof raw.q !== "string") return undefined;
   const q = typeof raw.q === "string" ? raw.q.trim() : "";
   if (q.length > 100) return undefined;
-  if (raw.category !== undefined && (typeof raw.category !== "string" || type !== "ITEM" || !["ELECTRONICS", "CLOTHING", "OTHER"].includes(raw.category))) return undefined;
+  if (raw.category !== undefined && (typeof raw.category !== "string" || type !== "ITEM" || !["ELECTRONICS", "CLOTHING", "FURNITURE", "OTHER"].includes(raw.category))) return undefined;
   if (raw.condition !== undefined && (typeof raw.condition !== "string" || type !== "ITEM" || !["NEW", "USED"].includes(raw.condition))) return undefined;
 
   const minPrice = raw.minPrice === undefined ? undefined : typeof raw.minPrice === "string" ? raw.minPrice : "";

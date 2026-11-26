@@ -12,7 +12,7 @@ export interface ListingSummary {
   type: ListingType;
   title: string;
   description: string;
-  category: "ELECTRONICS" | "CLOTHING" | "OTHER" | null;
+  category: "ELECTRONICS" | "CLOTHING" | "FURNITURE" | "OTHER" | null;
   condition: "NEW" | "USED" | null;
   rentalAddress: string | null;
   priceAmount: string | null;
@@ -136,7 +136,7 @@ export function toCardListing(item: ListingSummary): PreviewListing {
     type: item.type,
     title: item.title,
     description: item.description,
-    category: item.category === "ELECTRONICS" ? "Electronics" : item.category === "CLOTHING" ? "Clothing" : item.category === "OTHER" ? "Other" : undefined,
+    category: item.category === "ELECTRONICS" ? "Electronics" : item.category === "CLOTHING" ? "Clothing" : item.category === "FURNITURE" ? "Furniture" : item.category === "OTHER" ? "Other" : undefined,
     condition: item.condition === "NEW" ? "New" : item.condition === "USED" ? "Used" : undefined,
     address: item.rentalAddress ?? undefined,
     price: item.priceAmount === null ? null : Number(item.priceAmount),

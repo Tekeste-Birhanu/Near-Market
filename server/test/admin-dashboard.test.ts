@@ -76,6 +76,7 @@ describe("admin dashboard metrics", () => {
         { category: "CLOTHING", count: 2 },
         { category: "OTHER", count: 2 },
         { category: "ELECTRONICS", count: 0 },
+        { category: "FURNITURE", count: 0 },
       ],
     });
   });
@@ -92,6 +93,7 @@ describe("admin dashboard metrics", () => {
     expect(metrics.itemListingsByCategory).toEqual([
       { category: "CLOTHING", count: 0 },
       { category: "ELECTRONICS", count: 0 },
+      { category: "FURNITURE", count: 0 },
       { category: "OTHER", count: 0 },
     ]);
   });

@@ -18,7 +18,7 @@ export function createPrismaAdminDashboardRepository(prisma: PrismaClient): Admi
       const categoryCounts = new Map(
         categories.flatMap((item) => item.itemCategory ? [[item.itemCategory, item._count._all] as const] : []),
       );
-      const itemListingsByCategory = (["ELECTRONICS", "CLOTHING", "OTHER"] as const)
+      const itemListingsByCategory = (["ELECTRONICS", "CLOTHING", "FURNITURE", "OTHER"] as const)
         .map((category) => ({ category, count: categoryCounts.get(category) ?? 0 }))
         .sort((left, right) => right.count - left.count || (left.category < right.category ? -1 : left.category > right.category ? 1 : 0));
       return {

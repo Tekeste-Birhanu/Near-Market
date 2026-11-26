@@ -14,27 +14,33 @@
 
 ## 3. Visual foundations
 - **Typography:** Use the device system font consistently, including its Amharic and English support. Use a compact mobile scale: page-title headers 16px, section headings and detail titles 16px, listing titles 13px, listing prices 15px, detail prices 18px, body and form text 14px, and supporting text 10–13px. Use weight and contrast for emphasis rather than oversized text.
-- **Color:** Use the Near Market neutral and blue tokens below consistently. The app background surrounds each page; page backgrounds sit behind page content; cards and controls use the surface tokens. Use primary text for headings and values, secondary text for form labels and meaningful supporting details, and muted text for hints, counts, loading messages, and minor metadata. Use blue accent text on soft blue surfaces for selected states, and white text on primary blue actions. Keep success green reserved for success feedback.
+- **Color:** Use the Near Market neutral and teal-green brand tokens below consistently. The app background surrounds each page; page backgrounds sit behind page content; cards and controls use the surface tokens. Use primary text for headings and values, secondary text for form labels and meaningful supporting details, and muted text for hints, counts, loading messages, and minor metadata. Use the accent text on its soft accent surface for selected states, and white text on primary actions. Keep success green reserved for success feedback.
 
 | Token role | Light mode | Dark mode |
 | --- | --- | --- |
-| Page background | `#F0EFEC` | `#10110F` |
-| App background | `#F8F7F4` | `#151613` |
+| App background | `#F6F8F7` | `#151613` |
+| Page background | `#F6F8F7` | `#10110F` |
+| Header background | `#F6F8F7` | `#151613` |
 | Cards and controls | `#FFFFFF` | `#1D1F1B` |
 | Subtle surface | `#F1F0ED` | `#232520` |
 | Raised surface | `#FFFFFF` | `#272A24` |
-| Primary text | `#1D1D1A` | `#F2F2ED` |
-| Secondary text | `#4B4C46` | `#C9CBC3` |
-| Muted text | `#777A72` | `#91958B` |
-| Default border | `#E2E0DA` | `#2D302A` |
+| Primary text | `#182E2A` | `#F2F2ED` |
+| Secondary text | `#455D57` | `#C9CBC3` |
+| Muted text | `#60716C` | `#91958B` |
+| Default border | `#DCE5E1` | `#2D302A` |
 | Strong border | `#D5D2CA` | `#3A3E36` |
-| Primary blue | `#1686C8` | `#238BC6` |
-| Blue hover | `#1178B5` | `#2E9BD7` |
-| Soft blue background | `#E8F3FA` | `#1D303B` |
-| Blue accent text | `#0C72AD` | `#5EB6E7` |
-| Text on blue | `#FFFFFF` | `#FFFFFF` |
+| Card border | `#E1E9E5` | `#2D302A` |
+| Brand action | `#087567` | `#087567` |
+| Brand action hover | `#075B51` | `#075B51` |
+| Brand 50 / soft accent | `#EDF8F5` | `#1D303B` |
+| Brand 100 | `#D9EFE7` | `#1D303B` |
+| Brand 200 | `#B4D9CD` | `#2D4656` |
+| Brand 500 | `#087567` | `#63D4B5` |
+| Brand 700 / accent text | `#075B51` | `#8EE5CB` |
+| Success | `#16A34A` | `#22C55E` |
+| Text on brand action | `#FFFFFF` | `#FFFFFF` |
 
-Use a shared card surface with a consistent radius, border, and background throughout the app; vary padding and layout to fit each card's content. Reserve strong borders for emphasized edges and focus states. Keep page and app backgrounds close in tone so their separation stays subtle. Maintain readable contrast in both themes. Use primary text for headings and values, secondary text for form labels and meaningful supporting details, and muted text for hints, counts, loading messages, and minor metadata.
+Use a shared card surface with a consistent radius, border, and background throughout the app; vary padding and layout to fit each card's content. Reserve strong borders for emphasized edges and focus states. Keep page and app backgrounds close in tone so their separation stays subtle. Maintain readable contrast in both themes. Use primary text for headings and values, secondary text for form labels and meaningful supporting details, and muted text for hints, counts, loading messages, and minor metadata. The dark theme keeps the green brand action color from light mode; its interactive accents use the lighter brand shades for contrast.
 - **Spacing:** Keep cards and forms comfortable to use while fitting three listing cards in the initial screen view where the device size allows.
 - **Shape and elevation:** Use the shared rounded card surface for listing cards, filters, and form sections. Use spacing to separate the brand, search, and tabs. Give the brand row a very subtle background tint to distinguish it without adding a divider. Reserve stronger borders for interactive controls; keep full-width dividers subtle. Avoid relying on shadows to separate cards.
 - **Icons and imagery:** Use clear listing photos and recognizable icons. Listing-card images are square and occupy about one-third of the card width.
@@ -52,7 +58,7 @@ Use a shared card surface with a consistent radius, border, and background throu
 | Listing card | Summarize a listing in the feed. | Stack cards vertically. Use a square image at about one-third width, with a compact heading, prominent price, and a compact Contact button beside a compact View details button. Item cards show their seller-entered title and New or Used. Rental cards use the localized House rental label as the heading and show the seller-entered address. Use the same layout for both listing types. |
 | Photo gallery | Display listing photos on the details page. | Show a large main photo at the top and allow swiping through up to three photos. |
 | Listing form | Create or edit a listing. | Use one scrollable form for each listing type. Show uploaded photos as thumbnails with a remove control. Place Discard draft and Publish at the end of the form, with enough bottom spacing to clear the fixed navigation. |
-| Dashboard metric card | Present admin marketplace totals and the item category mix. | Show total users, total retained listings, item listings, and house rentals in separate summary cards. Use a wider card with Electronics, Clothing, and Other counts in descending count order and alphabetical tie order. Include sold and unavailable listings; exclude house rentals from the category breakdown. |
+| Dashboard metric card | Present admin marketplace totals and the item category mix. | Show total users, total retained listings, item listings, and house rentals in separate summary cards. Use a wider card with Electronics, Clothing, Furniture, and Other counts in descending count order and alphabetical tie order. Include sold and unavailable listings; exclude house rentals from the category breakdown. |
 
 ## 5. Screen-specific guidance
 
@@ -92,7 +98,7 @@ Use a shared card surface with a consistent radius, border, and background throu
 
 ### Admin dashboard
 - **Purpose:** Give admins a quick view of marketplace totals.
-- **Layout and hierarchy:** Present total users, total retained listings, item listings, and house rentals in compact cards. Show item listing counts for Electronics, Clothing, and Other in a wider card, ordered by count descending with alphabetical tie order. If all category counts are zero, show a concise empty message. If the category list grows beyond three rows, initially show three rows with a Show all categories control to expand it. Item and rental totals include sold and unavailable listings and sum to total listings.
+- **Layout and hierarchy:** Present total users, total retained listings, item listings, and house rentals in compact cards. Show item listing counts for Electronics, Clothing, Furniture, and Other in a wider card, ordered by count descending with alphabetical tie order. If all category counts are zero, show a concise empty message. If the category list grows beyond three rows, initially show three rows with a Show all categories control to expand it. Item and rental totals include sold and unavailable listings and sum to total listings.
 - **Related flow:** J-04 in `APP_FLOW.md`.
 
 ### Admin listing review

@@ -22,24 +22,18 @@ export function SurfaceCard<T extends ElementType = "section">({
 }
 
 /**
- * Brand mark placeholder — renders the "N" letterform at two sizes.
- * Replace the inner content with an <img> when the final logo is ready;
- * the outer container dimensions and className stay the same.
- *
- * size="lg"  — 42×42px, used in the marketplace Listings header
- * size="sm"  — 36×36px, used in the Admin Dashboard header
+ * Near Market logo used in the marketplace Listings and Admin Dashboard headers.
+ * size="lg" — 42×42px; size="sm" — 36×36px.
  */
 export function BrandMark({ size = "lg" }: { size?: "lg" | "sm" }) {
   const dim = size === "lg" ? "h-[42px] w-[42px]" : "h-9 w-9";
-  const text = size === "lg" ? "text-lg font-extrabold tracking-tight" : "text-base font-bold";
-  const shadow = size === "lg" ? " shadow-[0_8px_24px_rgba(22,134,200,0.18)]" : "";
   return (
-    <span
+    <img
+      src="/near-market-icon.svg"
+      alt=""
       aria-hidden="true"
-      className={`flex shrink-0 items-center justify-center rounded-xl bg-brand-500 text-white${shadow} ${dim} ${text}`}
-    >
-      N
-    </span>
+      className={`block shrink-0 rounded-xl shadow-[0_8px_24px_rgba(7,91,81,0.18)] ${dim}`}
+    />
   );
 }
 

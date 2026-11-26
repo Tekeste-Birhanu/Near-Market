@@ -7,7 +7,7 @@ export interface AdminDashboardMetrics {
   totalListings: number;
   totalItemListings: number;
   totalHouseRentalListings: number;
-  itemListingsByCategory: Array<{ category: "ELECTRONICS" | "CLOTHING" | "OTHER"; count: number }>;
+  itemListingsByCategory: Array<{ category: "ELECTRONICS" | "CLOTHING" | "FURNITURE" | "OTHER"; count: number }>;
 }
 
 export interface AdminDashboardRepository {

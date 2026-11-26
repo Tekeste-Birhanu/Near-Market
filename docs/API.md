@@ -108,7 +108,7 @@ Browse the selected feed. This route returns available listings only and default
 | `type`                 | Required: `ITEM` or `HOUSE_RENTAL`.                                                                                     |
 | `sort`                 | Optional `NEWEST` or `OLDEST`; defaults to `NEWEST`. |
 | `q`                    | Optional case-insensitive search over title and description; rental address is also searchable for house rentals. The value is trimmed and limited to 100 characters. |
-| `category`             | Optional item category: `ELECTRONICS`, `CLOTHING`, or `OTHER`; only valid with `type=ITEM`.                             |
+| `category`             | Optional item category: `ELECTRONICS`, `CLOTHING`, `FURNITURE`, or `OTHER`; only valid with `type=ITEM`.                             |
 | `condition`            | Optional `NEW` or `USED`; only valid with `type=ITEM`.                                                                  |
 | `minPrice`, `maxPrice` | Optional inclusive ETB price bounds with up to two decimal places. Contact-for-price listings have no numeric price and do not match a numeric bound. |
 | `limit`                | Optional page size from 1 to 50, default 20.                                                                            |
@@ -197,6 +197,7 @@ Return the MVP dashboard metrics:
   "itemListingsByCategory": [
     { "category": "ELECTRONICS", "count": 35 },
     { "category": "CLOTHING", "count": 20 },
+    { "category": "FURNITURE", "count": 8 },
     { "category": "OTHER", "count": 10 }
   ]
 }

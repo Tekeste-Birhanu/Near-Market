@@ -17,7 +17,7 @@ const props = {
 afterEach(() => vi.clearAllMocks());
 
 describe("Admin dashboard", () => {
-  it("renders the four totals and all item category counts without a future expand control", async () => {
+  it("renders totals and category counts with the expanded list control", async () => {
     const metrics = {
       totalUsers: 12,
       totalListings: 8,
@@ -26,6 +26,7 @@ describe("Admin dashboard", () => {
       itemListingsByCategory: [
         { category: "ELECTRONICS", count: 3 },
         { category: "CLOTHING", count: 2 },
+        { category: "FURNITURE", count: 0 },
         { category: "OTHER", count: 0 },
       ],
     };
@@ -40,8 +41,10 @@ describe("Admin dashboard", () => {
     expect(screen.getByText("House rentals")).toBeInTheDocument();
     expect(screen.getByText("Electronics")).toBeInTheDocument();
     expect(screen.getByText("Clothing")).toBeInTheDocument();
+    expect(screen.getByText("Furniture")).toBeInTheDocument();
+    expect(screen.queryByText("Other")).not.toBeInTheDocument();
+    await screen.getByRole("button", { name: "Show all categories" }).click();
     expect(screen.getByText("Other")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Show all categories" })).not.toBeInTheDocument();
   });
 
   it("shows the concise empty category message when all category counts are zero", async () => {
@@ -53,6 +56,7 @@ describe("Admin dashboard", () => {
       itemListingsByCategory: [
         { category: "ELECTRONICS", count: 0 },
         { category: "CLOTHING", count: 0 },
+        { category: "FURNITURE", count: 0 },
         { category: "OTHER", count: 0 },
       ],
     }) as never);

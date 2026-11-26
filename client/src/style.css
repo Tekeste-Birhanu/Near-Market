@@ -1,33 +1,36 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #e8f3fa;
-  --color-brand-100: #d7eaf5;
-  --color-brand-200: #bbdced;
-  --color-brand-500: #1686c8;
-  --color-brand-700: #1178b5;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans Ethiopic", "Noto Sans", Arial, sans-serif;
+  --color-brand-50: #edf8f5;
+  --color-brand-100: #d9efe7;
+  --color-brand-200: #b4d9cd;
+  --color-brand-500: #087567;
+  --color-brand-700: #075b51;
+  --font-sans:
+    "Manrope", "Noto Sans Ethiopic", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
 }
 
 :root {
-  --nm-bg: #f8f7f4;
-  --nm-page: #f0efec;
-  --nm-header: #f8f7f4;
+  --nm-bg: #f6f8f7;
+  --nm-page: #f6f8f7;
+  --nm-header: #f6f8f7;
   --nm-surface: #ffffff;
   --nm-surface-raised: #ffffff;
   --nm-surface-subtle: #f1f0ed;
-  --nm-text: #1d1d1a;
-  --nm-secondary: #4b4c46;
-  --nm-muted: #777a72;
-  --nm-border: #e2e0da;
+  --nm-text: #182e2a;
+  --nm-secondary: #455d57;
+  --nm-muted: #60716c;
+  --nm-border: #dce5e1;
   --nm-border-strong: #d5d2ca;
-  --nm-card-border: #e2e0da;
+  --nm-card-border: #e1e9e5;
   --nm-divider: color-mix(in srgb, #e2e0da 75%, transparent);
   --nm-hover: #f1f0ed;
-  --nm-accent-soft: #e8f3fa;
-  --nm-accent-text: #0c72ad;
-  --nm-action: #1686c8;
-  --nm-action-hover: #1178b5;
+  --nm-accent-soft: #edf8f5;
+  --nm-accent-text: #087063;
+  --nm-action: #087567;
+  --nm-action-hover: #075b51;
   --nm-success: #16a34a;
   color: var(--nm-text);
   background: var(--nm-bg);
@@ -41,8 +44,8 @@
   --color-brand-50: #1d303b;
   --color-brand-100: #1d303b;
   --color-brand-200: #2d4656;
-  --color-brand-500: #238bc6;
-  --color-brand-700: #2e9bd7;
+  --color-brand-500: #63d4b5;
+  --color-brand-700: #8ee5cb;
   --nm-bg: #151613;
   --nm-page: #10110f;
   --nm-header: #151613;
@@ -57,18 +60,24 @@
   --nm-card-border: #2d302a;
   --nm-divider: color-mix(in srgb, #2d302a 78%, transparent);
   --nm-hover: #232520;
-  --nm-accent-soft: #1d303b;
-  --nm-accent-text: #5eb6e7;
-  --nm-action: #238bc6;
-  --nm-action-hover: #2e9bd7;
+  --nm-accent-soft: #193b33;
+  --nm-accent-text: #8ee5cb;
+  --nm-action: #087567;
+  --nm-action-hover: #075b51;
   --nm-success: #22c55e;
   color-scheme: dark;
 }
 
 @keyframes shimmer {
-  0%   { opacity: 1; }
-  50%  { opacity: 0.4; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 @layer utilities {
@@ -108,5 +117,15 @@
   a,
   select {
     -webkit-tap-highlight-color: transparent;
+  }
+
+  :is(button, a, input, select, textarea):focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 3px;
+  }
+
+  button:not(:disabled),
+  select {
+    cursor: pointer;
   }
 }

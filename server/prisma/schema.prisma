@@ -17,6 +17,7 @@ enum ListingType {
 enum ItemCategory {
   ELECTRONICS
   CLOTHING
+  FURNITURE
   OTHER
 
   @@map("item_category")

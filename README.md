@@ -18,26 +18,44 @@ Near Market is a Telegram Mini App marketplace for new and used items and whole-
 - [API contract](docs/API.md)
 - [Implementation tasks](docs/TASKS.md)
 
-## Local API development
+## Local development
 
-Install dependencies from the repository root with `npm install`, then copy `.env.example` to `.env`. Set `DATABASE_URL` to a local PostgreSQL database and `SESSION_SECRET` to at least 32 random bytes. To use Telegram session authentication, set a matching server-side bot token. The API can start without a bot token; only session creation requires one.
+**Requirements:** Node.js 22.6+, npm 10+, and PostgreSQL.
 
-To run the marketplace bot, set `MARKETPLACE_BOT_ENABLED=true`, `MARKETPLACE_BOT_TOKEN`, and `MARKETPLACE_MINI_APP_URL` to an HTTPS URL reachable from Telegram. The bot's `/start` and `/app` commands show a button that opens that Mini App. Bot startup is disabled by default, so local API work does not contact Telegram.
+1. Install dependencies and create your local environment file:
 
-To run the separate admin bot in development, set `ADMIN_BOT_ENABLED=true`, `ADMIN_BOT_TOKEN`, and `ADMIN_MINI_APP_URL` to an HTTPS URL reachable from Telegram. The admin URL should open the client with `?app=admin` (for example, `https://your-host.example/?app=admin`). Its `/start` and `/app` commands open the Admin Mini App. The bot uses the shared API and database; production webhook or polling setup remains deferred until hosting is selected.
+   ```sh
+   npm install
+   cp .env.example .env
+   ```
 
-Admin removal notices are sent with `MARKETPLACE_BOT_TOKEN`. Keep this token configured when admins can remove listings; the marketplace bot does not need to be started just to send these notices.
+2. Set `DATABASE_URL` and a `SESSION_SECRET` of at least 32 bytes in `.env`. Configure a Telegram bot token if you need Mini App authentication.
+3. Generate the Prisma client and apply migrations:
 
-To provision the initial administrator, set `INITIAL_ADMIN_TELEGRAM_USER_ID` in the server's uncommitted `.env` to that operator's numeric Telegram user ID. On the next successful Telegram Mini App session for that ID, the server grants the database user admin access. Keep this value private and out of logs, screenshots, and committed files. Removing or changing the setting does not revoke an existing admin. To revoke this operator, first remove or change the setting, then set that user's `is_admin` field to `false` through a trusted database operation; otherwise the configured ID receives admin access again at the next session. Never grant admin access through a Mini App request.
+   ```sh
+   npm run db:generate --workspace=@near-market/server
+   npm run db:migrate --workspace=@near-market/server
+   ```
 
-Generate the Prisma Client and apply database migrations:
+4. Start the API and client in separate terminals:
+
+   ```sh
+   npm run dev --workspace=@near-market/server
+   npm run dev --workspace=@near-market/client
+   ```
+
+The client runs on Vite and proxies `/api` requests to `http://localhost:3001`. Check API health at `http://localhost:3001/health`.
+
+## Telegram and admin setup
+
+Bot processes are off by default. To enable one, set its `*_BOT_ENABLED=true`, bot token, and Mini App URL in `.env`. Telegram requires an HTTPS URL reachable by Telegram. For the admin bot, the URL should open the client with `?app=admin`. Admin listing removal notices use `MARKETPLACE_BOT_TOKEN` even when the marketplace bot process is off.
+
+To provision the first admin, set `INITIAL_ADMIN_TELEGRAM_USER_ID` to the operator's numeric Telegram ID. Admin access is granted on their next authenticated Mini App session. Keep the ID and bot tokens private. Changing or removing the setting does not revoke an existing admin; revoke access through a trusted database operation after changing the setting.
+
+## Checks
+
+Run client and server unit tests with `npm test`, type checks with `npm run typecheck`, and a production build with `npm run build`. Database integration tests are separate and require a dedicated test database:
 
 ```sh
-npm run db:generate --workspace=@near-market/server
-npm run db:migrate --workspace=@near-market/server
 npm run test:db --workspace=@near-market/server
 ```
-
-Use a dedicated local test database for `test:db`; the integration tests roll back their changes. Run the API with `npm run dev --workspace=@near-market/server` and the Mini App client with `npm run dev --workspace=@near-market/client`. Vite proxies client `/api` requests to the local API at `http://localhost:3001`. The health endpoint is available at `http://localhost:3001/health`.
-
-Run the non-database test suites with `npm test`. The server's database integration suite is excluded from that command; run it separately with `npm run test:db --workspace=@near-market/server` only after configuring a dedicated test database.

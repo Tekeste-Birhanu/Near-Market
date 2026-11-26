@@ -8,7 +8,7 @@ type Metrics = {
   totalListings: number;
   totalItemListings: number;
   totalHouseRentalListings: number;
-  itemListingsByCategory: Array<{ category: "ELECTRONICS" | "CLOTHING" | "OTHER"; count: number }>;
+  itemListingsByCategory: Array<{ category: "ELECTRONICS" | "CLOTHING" | "FURNITURE" | "OTHER"; count: number }>;
 };
 
 export function AdminDashboardPage({
@@ -124,7 +124,7 @@ export function AdminDashboardPage({
                           return (
                             <li key={item.category} className="space-y-1.5 py-2 first:pt-0 last:pb-0">
                               <div className="flex items-center justify-between gap-3">
-                                <span className="text-sm text-[var(--nm-text)]">{t(item.category === "ELECTRONICS" ? "electronics" : item.category === "CLOTHING" ? "clothing" : "other")}</span>
+                                <span className="text-sm text-[var(--nm-text)]">{t(item.category === "ELECTRONICS" ? "electronics" : item.category === "CLOTHING" ? "clothing" : item.category === "FURNITURE" ? "furniture" : "other")}</span>
                                 <span className="shrink-0 text-sm font-semibold tabular-nums text-[var(--nm-text)]">
                                   {item.count.toLocaleString(language === "am" ? "am-ET" : "en-US")}
                                   <span className="ml-1.5 text-xs font-normal text-[var(--nm-muted)]">{pct}%</span>
