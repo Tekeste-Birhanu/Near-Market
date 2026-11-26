@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.ts";
 import { issueAccessToken } from "../src/auth/session-token.ts";
 import { createPrismaListingLifecycleRepository } from "../src/listings/lifecycle-repository.ts";
+import { makeActiveAuthUserRepository } from "./auth-user.ts";
 import type { ListingLifecycleRepository } from "../src/listings/lifecycle-route.ts";
 import type { ListingDetailsRecord } from "../src/listings/read-route.ts";
 import type { PrismaClient } from "../generated/prisma/client.ts";
@@ -43,7 +44,7 @@ const validFields = (type = "ITEM") => ({
 });
 
 function app(repository: ListingLifecycleRepository) {
-  return createApp({ rateLimitMax: 100, rateLimitWindowMs: 60_000 }, { auth: { sessionSecret: secret }, listingLifecycleRepository: repository });
+  return createApp({ rateLimitMax: 100, rateLimitWindowMs: 60_000 }, { auth: { sessionSecret: secret, userRepository: makeActiveAuthUserRepository() }, listingLifecycleRepository: repository });
 }
 
 function auth(test: request.Test, token = issueAccessToken(ownerId, secret).accessToken) {

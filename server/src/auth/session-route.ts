@@ -53,11 +53,23 @@ export function createAuthRouter(dependencies: AuthSessionDependencies = {}) {
 
     const telegramUser = validation.user;
     const user = await dependencies.userRepository.upsertTelegramUser(telegramUser);
+
+    if (user.isBlocked) {
+      sendError(res, 403, "ACCOUNT_BLOCKED", "Your access has been suspended.");
+      return;
+    }
+
     const session = issueAccessToken(user.id, dependencies.sessionSecret, now);
     res.status(200).json({
       accessToken: session.accessToken,
       expiresAt: session.expiresAt.toISOString(),
-      user,
+      user: {
+        id: user.id,
+        telegramUsername: user.telegramUsername,
+        displayName: user.displayName,
+        phoneNumber: user.phoneNumber,
+        isAdmin: user.isAdmin,
+      },
     });
   });
 

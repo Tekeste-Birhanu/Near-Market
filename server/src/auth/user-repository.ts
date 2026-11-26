@@ -7,6 +7,7 @@ export interface AuthenticatedUser {
   displayName: string;
   phoneNumber: string | null;
   isAdmin: boolean;
+  isBlocked: boolean;
 }
 
 export interface AuthUserRepository {
@@ -39,6 +40,7 @@ export function createPrismaUserRepository(
           displayName: true,
           phoneNumber: true,
           isAdmin: true,
+          isBlocked: true,
         },
       });
 
@@ -47,7 +49,7 @@ export function createPrismaUserRepository(
     async getUserById(userId) {
       return prisma.user.findUnique({
         where: { id: userId },
-        select: { id: true, telegramUsername: true, displayName: true, phoneNumber: true, isAdmin: true },
+        select: { id: true, telegramUsername: true, displayName: true, phoneNumber: true, isAdmin: true, isBlocked: true },
       });
     },
     async updateProfile(userId, profile) {
@@ -55,7 +57,7 @@ export function createPrismaUserRepository(
         return await prisma.user.update({
           where: { id: userId },
           data: profile,
-          select: { id: true, telegramUsername: true, displayName: true, phoneNumber: true, isAdmin: true },
+          select: { id: true, telegramUsername: true, displayName: true, phoneNumber: true, isAdmin: true, isBlocked: true },
         });
       } catch (error) {
         if (typeof error === "object" && error !== null && "code" in error && error.code === "P2025") return null;

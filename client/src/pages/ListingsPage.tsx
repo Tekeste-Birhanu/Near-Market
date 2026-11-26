@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AppearanceControls, BrandMark, Icon, SurfaceCard, type Theme } from "../components/SharedUI";
+import { AppearanceControls, BrandMark, Icon, PageTitle, SurfaceCard, type Theme } from "../components/SharedUI";
 import { FilterDropdown, ListingCard, ListingCardSkeleton, ListingDetailsDialog } from "../components/ListingComponents";
 import { previewListings, type ListingType, type PreviewListing } from "../data/listings";
 import type { Language, Translator } from "../i18n/translations";
@@ -158,7 +158,7 @@ export function ListingsPage({
       <header className="flex min-h-[64px] w-full items-center justify-between gap-3 bg-[var(--nm-header)] px-5 pb-1 pt-[max(6px,env(safe-area-inset-top))]">
         <div className="flex w-full items-center justify-between gap-3">
           {adminMode
-            ? <h1 className="text-xl font-bold leading-6 text-[var(--nm-text)]">{t("listings")}</h1>
+            ? <PageTitle icon="list" title={t("listings")} />
             : <div className="flex min-w-0 items-center gap-2.5">
               <BrandMark size="lg" />
               <div className="min-w-0">

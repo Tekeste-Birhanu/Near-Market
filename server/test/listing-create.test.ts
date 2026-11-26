@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.ts";
 import { issueAccessToken } from "../src/auth/session-token.ts";
 import { createPrismaListingCreateRepository } from "../src/listings/create-repository.ts";
+import { makeActiveAuthUserRepository } from "./auth-user.ts";
 import type { ListingCreateInput, ListingCreateRecord, ListingCreateRepository } from "../src/listings/create-route.ts";
 import type { PrismaClient } from "../generated/prisma/client.ts";
 
@@ -46,7 +47,7 @@ function makeApp(repository: ListingCreateRepository = {
 }) {
   return createApp(
     { rateLimitMax: 100, rateLimitWindowMs: 60_000 },
-    { auth: { sessionSecret }, listingCreateRepository: repository },
+    { auth: { sessionSecret, userRepository: makeActiveAuthUserRepository() }, listingCreateRepository: repository },
   );
 }
 

@@ -11,6 +11,7 @@ import { createPrismaListingCreateRepository } from "./listings/create-repositor
 import { createPrismaListingLifecycleRepository } from "./listings/lifecycle-repository.ts";
 import { createPrismaAdminDashboardRepository } from "./admin/dashboard-repository.ts";
 import { createPrismaAdminListingRepository } from "./admin/listings-repository.ts";
+import { createPrismaAdminUserRepository } from "./admin/users-repository.ts";
 import { Telegraf } from "telegraf";
 
 async function startServer(): Promise<void> {
@@ -27,6 +28,7 @@ async function startServer(): Promise<void> {
     listingLifecycleRepository: prisma ? createPrismaListingLifecycleRepository(prisma) : undefined,
     adminDashboardRepository: prisma ? createPrismaAdminDashboardRepository(prisma) : undefined,
     adminListingRepository: prisma ? createPrismaAdminListingRepository(prisma) : undefined,
+    adminUserRepository: prisma ? createPrismaAdminUserRepository(prisma) : undefined,
     notifyListingSeller: config.marketplaceBotToken
       ? (telegramUserId) => new Telegraf(config.marketplaceBotToken!).telegram.sendMessage(
         telegramUserId,
@@ -49,7 +51,11 @@ async function startServer(): Promise<void> {
   });
 
   if (config.marketplaceBotEnabled && config.marketplaceBotToken && config.marketplaceMiniAppUrl) {
-    const marketplaceBot = createMarketplaceBot(config.marketplaceBotToken, config.marketplaceMiniAppUrl);
+    const marketplaceBot = createMarketplaceBot(
+      config.marketplaceBotToken,
+      config.marketplaceMiniAppUrl,
+      prisma ? async (telegramUserId) => Boolean(await prisma.user.findUnique({ where: { telegramUserId: BigInt(telegramUserId) }, select: { isBlocked: true } }).then((user) => user?.isBlocked)) : undefined,
+    );
     process.once("SIGINT", () => marketplaceBot.stop("SIGINT"));
     process.once("SIGTERM", () => marketplaceBot.stop("SIGTERM"));
     void marketplaceBot.telegram.getMe()

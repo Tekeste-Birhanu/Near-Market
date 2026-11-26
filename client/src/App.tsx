@@ -7,6 +7,7 @@ import { ListingsPage } from "./pages/ListingsPage";
 import { PostPage } from "./pages/PostPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
+import { AdminUsersPage } from "./pages/AdminUsersPage";
 import {
   createSession,
   getTelegramInitData,
@@ -80,6 +81,11 @@ export function DesignPreview({
       {adminMode && visitedPages.has("dashboard") && (
         <div hidden={activePage !== "dashboard"}>
           <AdminDashboardPage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} t={t} isActive={activePage === "dashboard"} />
+        </div>
+      )}
+      {adminMode && visitedPages.has("users") && (
+        <div hidden={activePage !== "users"}>
+          <AdminUsersPage theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} t={t} isActive={activePage === "users"} currentUserId={user?.id} />
         </div>
       )}
       {visitedPages.has("post") && (

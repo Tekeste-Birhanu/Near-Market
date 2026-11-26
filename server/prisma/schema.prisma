@@ -44,6 +44,7 @@ model User {
   displayName      String    @map("display_name") @db.Text
   phoneNumber      String?   @map("phone_number") @db.Text
   isAdmin          Boolean   @default(false) @map("is_admin")
+  isBlocked        Boolean   @default(false) @map("is_blocked")
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   listings         Listing[]

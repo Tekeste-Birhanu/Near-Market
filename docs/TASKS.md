@@ -139,7 +139,7 @@ Build the shared Mini App experience: app shell and profile, browsing and contac
 
 ## M3 - Admin dashboard and moderation
 
-Add admin-only access, marketplace metrics, listing review, removal, and seller notice.
+Add admin-only access, marketplace metrics, listing review, removal, seller notice, and user management.
 
 **T20 - Establish trusted admin provisioning**
 
@@ -183,23 +183,31 @@ Add admin-only access, marketplace metrics, listing review, removal, and seller 
 - [x] Load listing images as they approach the visible area, with a fallback for browsers that lack the required observer.
 - [x] Verify deferred page requests, state preservation, and deferred image requests with tests.
 
+**T26 - Implement admin user management**
+
+- [x] Add the blocked-user schema and migration; reject blocked users at session creation and on every authenticated API request.
+- [x] Add admin-only user search and pagination, block, and unblock endpoints; blocking atomically marks the user and deletes their listings and images, prevents self-blocking, and sends no notifications.
+- [x] Hide blocked users' listings and profiles from other users, and make the marketplace bot show blocked users a suspension message in English and Amharic.
+- [x] Add the Admin Mini App Users tab with paginated user rows, debounced search, All / Active / Blocked filters, status, and confirmed block/unblock actions.
+- [x] Verify blocked-user access, atomic block and unblock behavior, bot responses, user-list filtering and pagination, seller visibility, authorization, and core Users tab states with tests.
+- [ ] Apply the migration to a clean database and verify the migrated schema.
 ## M4 - Release readiness
 
 Verify complete journeys, review security and accessibility, and finalize release documentation.
 
-**T26 - Verify end-to-end user journeys**
+**T27 - Verify end-to-end user journeys**
 
-- [ ] Verify browse/contact, post/manage, admin dashboard, removal, and seller notification for both listing types.
+- [ ] Verify browse/contact, post/manage, admin dashboard, listing removal, user management (block/unblock), and seller notification for both listing types.
 - [ ] Check loading, empty, validation, unavailable, unauthorized, and recoverable error states.
 - [ ] Run configured test suites and record manual Telegram Mini App checks accurately.
 
-**T27 - Review security, privacy, and accessibility**
+**T28 - Review security, privacy, and accessibility**
 
 - [ ] Verify server-side authentication, ownership, admin authorization, input validation, and image handling.
 - [ ] Confirm phone numbers are absent from feeds/profile pages and secrets/raw `initData` are absent from logs.
 - [ ] Check semantic labels, keyboard use, visible focus, descriptive alternative text for images, reduced motion, pressed/selected/disabled states, and contrast in both app themes.
 
-**T28 - Finalize developer and release documentation**
+**T29 - Finalize developer and release documentation**
 
 - [ ] Add verified local setup, environment, test, migration, and run instructions to the README; keep the `docs/API.md` link.
 - [ ] Confirm `.env.example` matches configuration and contains no secrets.

@@ -180,7 +180,7 @@ Return that seller's available listings, newest first, using the standard `items
 
 ## 5. Admin API
 
-Dashboard metrics and listing review/removal routes are implemented in M3. Verification status is tracked in `TASKS.md` T20–T23.
+Dashboard metrics, listing review/removal, and user management routes. Verification status is tracked in `TASKS.md` T20–T23 and T26.
 
 All `/admin` routes require a valid authenticated session and stored admin permission. A client-supplied role never grants access.
 
@@ -220,9 +220,46 @@ Return the image bytes for a retained listing to an admin regardless of availabi
 
 Permanently remove a listing and its images. After the database deletion succeeds, send the seller the agreed Telegram notice through the marketplace bot, without a reason; configure `MARKETPLACE_BOT_TOKEN` for notice delivery. If notification delivery fails or the token is not configured, keep the listing removed and return `204`; log only a generic delivery failure. Return `204` on successful removal. Unknown listings return `404`.
 
+### `GET /admin/users`
+
+Return a paginated list of all registered users, newest registered first.
+
+**Query parameters:** `search` (string, up to 100 chars — matches display name or Telegram username, case-insensitive substring), `filter` (`all` | `active` | `blocked`, default `all`), `limit` (integer 1–50, default 20), `cursor` (opaque pagination token).
+
+**Success `200`:**
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "displayName": "Seller Name",
+      "telegramUsername": "seller_name",
+      "isBlocked": false,
+      "createdAt": "2026-01-01T10:00:00Z"
+    }
+  ],
+  "nextCursor": "<opaque-string-or-null>"
+}
+```
+
+Do not include `telegramUserId`, `phoneNumber`, `isAdmin`, or any other private fields in the response.
+
+### `POST /admin/users/{userId}/block`
+
+Block a user and permanently remove all of their listings and listing images in one atomic transaction. No notifications are sent to the blocked user or to buyers of removed listings. The admin's own account cannot be blocked.
+
+Returns `204` on success. Returns `404` if the user does not exist. Returns `409 CANNOT_BLOCK_SELF` if the authenticated admin attempts to block themselves.
+
+### `POST /admin/users/{userId}/unblock`
+
+Restore access for a blocked user. Does not restore listings removed at block time.
+
+Returns `204` on success. Returns `404` if the user does not exist.
+
 ## 6. Telegram bot integration
 
-The implementation uses separate Telegraf bots for the marketplace and admin launch paths. Their `/start` and `/app` commands return inline buttons for their respective Mini App URLs. Bot updates are not Mini App REST endpoints. Bot tokens and Mini App URLs are server-side configuration. Development bot startup is opt-in and uses Telegraf's default long polling; production webhook or polling configuration is deferred with hosting in `ARCHITECTURE.md`.
+The implementation uses separate Telegraf bots for the marketplace and admin launch paths. Marketplace `/start` and `/app` commands check the sender's stored blocked status; blocked senders receive a suspension message in English and Amharic instead of the Mini App button. Other users receive the marketplace button. The admin bot's `/start` and `/app` commands return its Admin Mini App button. Bot updates are not Mini App REST endpoints. Bot tokens and Mini App URLs are server-side configuration. Development bot startup is opt-in and uses Telegraf's default long polling; production webhook or polling configuration is deferred with hosting in `ARCHITECTURE.md`.
 
 The backend validates Telegram Mini App `initData` in `POST /auth/session`; Telegraf bot context is not a substitute for Mini App authentication. Admin access is based on the authenticated user's server-side `isAdmin` value.
 
@@ -246,8 +283,9 @@ Errors use one JSON shape:
 | ----------- | ----------------------------------------------------------------------------------------- |
 | `400`       | Malformed request, invalid enum, invalid filter combination, or field validation failure. |
 | `401`       | Missing, invalid, or expired API access token; invalid Telegram `initData`.               |
-| `403`       | Authenticated user lacks permission, or lacks a Telegram username required to post.       |
+| `403`       | Authenticated user lacks permission, lacks a Telegram username required to post (`USERNAME_REQUIRED`), or is blocked (`ACCOUNT_BLOCKED`). |
 | `404`       | Resource does not exist or is not visible to this caller.                                 |
+| `409`       | Conflict; for example, an admin attempting to block themselves (`CANNOT_BLOCK_SELF`).     |
 | `410`       | Listing exists but is sold or unavailable to public view.                                 |
 | `413`       | Request or image exceeds the allowed upload size.                                         |
 | `429`       | Request rate limit exceeded; response includes `Retry-After` and rate limit headers.       |
@@ -266,4 +304,4 @@ Errors use one JSON shape:
 ## 9. Alignment notes
 
 - The optional phone number is stored on the seller profile, shared across that seller's listings, and returned only on listing details, consistent with the product requirement.
-- Listing creation, editing, admin removal, and the dashboard follow the shared schema and `APP_FLOW.md`. Buyer reporting is not included in the MVP API.
+- Listing creation, editing, admin removal, user management (block/unblock), and the dashboard follow the shared schema and `APP_FLOW.md`. Buyer reporting is not included in the MVP API.

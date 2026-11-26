@@ -2,7 +2,7 @@ import { forwardRef, type ComponentPropsWithoutRef, type ElementType, type React
 import type { Language, TranslationKey, Translator } from "../i18n/translations";
 
 export type Theme = "light" | "dark";
-export type MainPage = "dashboard" | "listings" | "post" | "profile";
+export type MainPage = "dashboard" | "users" | "listings" | "post" | "profile";
 export type IconName =
   | "search" | "filter" | "list" | "plus" | "profile" | "send"
   | "chevron" | "home" | "cube" | "image" | "trash" | "close" | "sun" | "moon" | "settings" | "users" | "dashboard" | "refresh";
@@ -100,6 +100,17 @@ export function Icon({ name, className = "h-5 w-5" }: { name: IconName; classNam
   );
 }
 
+export function PageTitle({ icon, title }: { icon: IconName; title: string }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2.5">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500/15 text-brand-500">
+        <Icon name={icon} className="h-5 w-5" />
+      </span>
+      <h1 className="truncate text-base font-bold text-[var(--nm-text)]">{title}</h1>
+    </div>
+  );
+}
+
 export function AppearanceControls({
   theme,
   onThemeChange,
@@ -156,6 +167,7 @@ export function BottomNavigation({
 }) {
   const pages: { id: MainPage; label: TranslationKey; icon: IconName }[] = [
     ...(adminMode ? [{ id: "dashboard" as const, label: "dashboard" as const, icon: "dashboard" as const }] : []),
+    ...(adminMode ? [{ id: "users" as const, label: "usersTab" as const, icon: "users" as const }] : []),
     { id: "listings", label: "listings", icon: "list" },
     { id: "post", label: "post", icon: "plus" },
     { id: "profile", label: "profile", icon: "profile" },
@@ -164,7 +176,7 @@ export function BottomNavigation({
   return (
     <nav
       aria-label={t("mainNavigation")}
-      className={`fixed inset-x-0 bottom-0 z-20 mx-auto grid h-[calc(72px+env(safe-area-inset-bottom))] w-full max-w-[390px] ${adminMode ? "grid-cols-4" : "grid-cols-3"} border-t border-[var(--nm-divider)] bg-[color-mix(in_srgb,var(--nm-surface)_94%,transparent)] px-[18px] pb-[env(safe-area-inset-bottom)] pt-[7px] backdrop-blur-lg`}
+      className={`fixed inset-x-0 bottom-0 z-20 mx-auto grid h-[calc(72px+env(safe-area-inset-bottom))] w-full max-w-[390px] ${adminMode ? "grid-cols-5" : "grid-cols-3"} border-t border-[var(--nm-divider)] bg-[color-mix(in_srgb,var(--nm-surface)_94%,transparent)] px-[10px] pb-[env(safe-area-inset-bottom)] pt-[7px] backdrop-blur-lg`}
     >
       {pages.map(({ id, label, icon }) => (
         <button

@@ -28,6 +28,7 @@ export function createPrismaListingFeedRepository(prisma: PrismaClient): Listing
       const where: Prisma.ListingWhereInput = {
         listingType: query.type,
         availabilityStatus: "AVAILABLE",
+        seller: { isBlocked: false },
         ...(query.category ? { itemCategory: query.category } : {}),
         ...(query.condition ? { itemCondition: query.condition } : {}),
         ...((query.minPrice || query.maxPrice) ? {

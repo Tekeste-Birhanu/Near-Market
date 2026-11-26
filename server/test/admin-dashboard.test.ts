@@ -16,7 +16,7 @@ function makeApp(metrics: AdminDashboardMetrics) {
   const userRepository: AuthUserRepository = {
     upsertTelegramUser: vi.fn(),
     getUserById: vi.fn(async (userId) => ({
-      id: userId, telegramUsername: null, displayName: "User", phoneNumber: null, isAdmin: userId === adminId,
+      id: userId, telegramUsername: null, displayName: "User", phoneNumber: null, isAdmin: userId === adminId, isBlocked: false,
     })),
     updateProfile: vi.fn(),
   };

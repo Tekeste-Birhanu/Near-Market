@@ -13,7 +13,7 @@
 - Use the device system font so Amharic and English render naturally across supported devices.
 
 ## 3. Visual foundations
-- **Typography:** Use the device system font consistently, including its Amharic and English support. Use a compact mobile scale: page headings 20px, section headings and detail titles 16px, listing titles 13px, listing prices 15px, detail prices 18px, body and form text 14px, and supporting text 10–13px. Use weight and contrast for emphasis rather than oversized text.
+- **Typography:** Use the device system font consistently, including its Amharic and English support. Use a compact mobile scale: page-title headers 16px, section headings and detail titles 16px, listing titles 13px, listing prices 15px, detail prices 18px, body and form text 14px, and supporting text 10–13px. Use weight and contrast for emphasis rather than oversized text.
 - **Color:** Use the Near Market neutral and blue tokens below consistently. The app background surrounds each page; page backgrounds sit behind page content; cards and controls use the surface tokens. Use primary text for headings and values, secondary text for form labels and meaningful supporting details, and muted text for hints, counts, loading messages, and minor metadata. Use blue accent text on soft blue surfaces for selected states, and white text on primary blue actions. Keep success green reserved for success feedback.
 
 | Token role | Light mode | Dark mode |
@@ -44,10 +44,10 @@ Use a shared card surface with a consistent radius, border, and background throu
 
 | Component / pattern | Purpose | Relevant behavior / variants |
 |---|---|---|
-| Bottom navigation | Move between main areas of the Mini App. | Show an icon and label for Listings, Post, and Profile. The Admin Mini App also has Dashboard. |
+| Bottom navigation | Move between main areas of the Mini App. | Show an icon and label for Listings, Post, and Profile. The Admin Mini App also has Dashboard and Users (order: Dashboard · Users · Listings · Post · Profile). |
 | Listing type tabs | Switch between Items and House rentals within Listings. | Place a simple tab bar outside and below the branding/search card, with a clear gap. Keep it on the page background without a separate card. Items is selected by default. Search applies only to the selected tab and sits above the tabs. Show a faint baseline across the row and an active underline spanning the selected tab segment; color the selected label blue. Allow horizontal swipes on listing content to switch tabs without interrupting vertical scrolling or controls. |
 | Search and filters | Find listings in the selected listing type. | Keep filters hidden until Filter is tapped; show controls inline on Listings. Use app-styled, keyboard-accessible dropdowns. Include Clear filters to reset visible filter values without closing the panel or clearing search. |
-| Appearance controls | Keep app language and theme settings consistent across pages. | Reuse the same 36px English/Amharic and Light/Dark toggles at the top right of every page. Keep page headers 64px tall, with 20px horizontal insets and the same safe-area top inset. Use 20px page titles. Set a consistent 16px gap between the header and the first content block on every page. In the marketplace app, show Near Market branding on Listings only; in the Admin Mini App, show it on Dashboard only. Other pages show their own title. Default to English and Dark mode; persist both choices locally. The app theme is independent of Telegram's theme. |
+| Appearance controls | Keep app language and theme settings consistent across pages. | Reuse the same 36px English/Amharic and Light/Dark toggles at the top right of every page. Keep page headers 64px tall, with 20px horizontal insets and the same safe-area top inset. On non-brand page headers, pair a 36px soft-accent icon tile with a 16px bold page title. Set a consistent 16px gap between the header and the first content block on every page. In the marketplace app, show Near Market branding on Listings only; in the Admin Mini App, show it on Dashboard only. Other pages show their own title. Default to English and Dark mode; persist both choices locally. The app theme is independent of Telegram's theme. |
 | Profile card | Identify the signed-in seller and provide a Settings shortcut. | Show the seller's display name and Telegram username when available, plus a gear button. The gear opens a separate Settings view; it is not a Profile tab. |
 | Listing card | Summarize a listing in the feed. | Stack cards vertically. Use a square image at about one-third width, with a compact heading, prominent price, and a compact Contact button beside a compact View details button. Item cards show their seller-entered title and New or Used. Rental cards use the localized House rental label as the heading and show the seller-entered address. Use the same layout for both listing types. |
 | Photo gallery | Display listing photos on the details page. | Show a large main photo at the top and allow swiping through up to three photos. |
@@ -99,6 +99,13 @@ Use a shared card surface with a consistent radius, border, and background throu
 - **Purpose:** Let admins inspect retained listings and remove prohibited or otherwise unsuitable listings.
 - **Layout and behavior:** Reuse the Items and House rentals tabs, search, filters, and listing cards from Listings. Admin results include sold and unavailable listings. Details show the listing status and photos; provide a destructive Remove listing action with a confirmation that explains the seller will be notified.
 - **Related flow:** J-04 in `APP_FLOW.md`.
+
+### Admin user management
+- **Purpose:** Let the admin view all registered users and control their access.
+- **Layout and hierarchy:** Show the Users page title and shared appearance controls at the top. Below them, show the full-width search field using the shared Listings search style, then All / Active / Blocked filter pills on the next row. Show a compact, paginated list of users below; each row shows the display name, Telegram username (or a placeholder when absent), joined date, and an Active or Blocked status badge. Blocked rows use a visually distinct badge (e.g., red). Place a ⋯ icon button at the trailing edge of each row to open a per-user action menu with Block or Unblock.
+- **Block confirmation:** Use a clear confirmation dialog before blocking. Copy: *"Block @username? This will remove all their listings and prevent them from accessing Near Market."* Use the display name when a user has no Telegram username. Provide distinct confirm and cancel actions. Unblocking does not require a confirmation.
+- **Empty and loading states:** Show a loading skeleton while the list loads. Show a concise empty message when the search or filter returns no users.
+- **Related flow:** J-05 in `APP_FLOW.md`.
 
 ## 6. Interaction and UI states
 - **Interactive states:** Give buttons, tabs, filters, and cards clear pressed, selected, focus, and disabled states as applicable. Keep action buttons compact within listing cards.

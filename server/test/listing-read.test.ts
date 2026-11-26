@@ -5,6 +5,7 @@ import { createApp } from "../src/app.ts";
 import { issueAccessToken } from "../src/auth/session-token.ts";
 import type { ListingFeedRecord } from "../src/listings/feed-route.ts";
 import type { ListingDetailsRecord, ListingImageRecord, ListingReadRepository, PublicSellerProfile } from "../src/listings/read-route.ts";
+import { makeActiveAuthUserRepository } from "./auth-user.ts";
 
 const sessionSecret = "local-test-session-secret-32-characters-minimum";
 const buyerId = "dd7320bd-8c00-42da-9ee8-5fe6bcba7cf2";
@@ -74,7 +75,7 @@ function makeRepository(options: {
   };
   const app = createApp(
     { rateLimitMax: 100, rateLimitWindowMs: 60_000 },
-    { auth: { sessionSecret }, listingReadRepository: repository },
+    { auth: { sessionSecret, userRepository: makeActiveAuthUserRepository() }, listingReadRepository: repository },
   );
   return { app, repository };
 }

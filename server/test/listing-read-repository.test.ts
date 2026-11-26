@@ -7,6 +7,7 @@ function makePrisma() {
   return {
     listing: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn().mockResolvedValue([]),
     },
     listingImage: { findFirst: vi.fn() },
@@ -24,8 +25,8 @@ describe("Prisma listing read repository", () => {
 
     await repository.findDetails("listing-id");
 
-    expect(prisma.listing.findUnique).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: "listing-id" },
+    expect(prisma.listing.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: "listing-id", seller: { isBlocked: false } },
       select: expect.objectContaining({
         sellerId: true,
         images: { orderBy: { position: "asc" }, select: { id: true, position: true } },
@@ -44,7 +45,7 @@ describe("Prisma listing read repository", () => {
     await repository.findImage("listing-id", "image-id");
 
     expect(prisma.listingImage.findFirst).toHaveBeenCalledWith({
-      where: { id: "image-id", listingId: "listing-id" },
+      where: { id: "image-id", listingId: "listing-id", listing: { seller: { isBlocked: false } } },
       select: {
         mimeType: true,
         imageBytes: true,
@@ -69,7 +70,27 @@ describe("Prisma listing read repository", () => {
     await repository.findSeller("seller-id");
     expect(prisma.user.findUnique).toHaveBeenNthCalledWith(2, {
       where: { id: "seller-id" },
-      select: { id: true, displayName: true, telegramUsername: true },
+      select: { id: true, displayName: true, telegramUsername: true, isBlocked: true },
+    });
+  });
+
+  it("does not return blocked seller profiles to public reads", async () => {
+    const prisma = makePrisma();
+    prisma.user.findUnique.mockResolvedValue({
+      id: "seller-id",
+      displayName: "Seller",
+      telegramUsername: "seller",
+      isBlocked: true,
+    });
+    const repository = createPrismaListingReadRepository(
+      prisma as unknown as PrismaClient,
+      createPrismaListingFeedRepository(prisma as unknown as PrismaClient),
+    );
+
+    expect(await repository.findSeller("seller-id")).toBeNull();
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({
+      where: { id: "seller-id" },
+      select: { id: true, displayName: true, telegramUsername: true, isBlocked: true },
     });
   });
 

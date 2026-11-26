@@ -5,6 +5,16 @@ function sendError(res: Response, status: number, code: string, message: string)
   res.status(status).json({ error: { code, message } });
 }
 
+function serializeProfile(user: NonNullable<Awaited<ReturnType<AuthUserRepository["getUserById"]>>>) {
+  return {
+    id: user.id,
+    telegramUsername: user.telegramUsername,
+    displayName: user.displayName,
+    phoneNumber: user.phoneNumber,
+    isAdmin: user.isAdmin,
+  };
+}
+
 export function createProfileRouter(userRepository?: AuthUserRepository) {
   const router = Router();
 
@@ -18,7 +28,7 @@ export function createProfileRouter(userRepository?: AuthUserRepository) {
       sendError(res, 404, "NOT_FOUND", "The profile was not found.");
       return;
     }
-    res.status(200).json(user);
+    res.status(200).json(serializeProfile(user));
   });
 
   router.patch("/me", async (req, res) => {
@@ -60,7 +70,7 @@ export function createProfileRouter(userRepository?: AuthUserRepository) {
       sendError(res, 404, "NOT_FOUND", "The profile was not found.");
       return;
     }
-    res.status(200).json(user);
+    res.status(200).json(serializeProfile(user));
   });
 
   return router;

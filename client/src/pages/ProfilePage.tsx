@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import type { Language, Translator } from "../i18n/translations";
-import { AppearanceControls, BackButton, Icon, SurfaceCard, type Theme } from "../components/SharedUI";
+import { AppearanceControls, BackButton, Icon, PageTitle, SurfaceCard, type Theme } from "../components/SharedUI";
 import { apiImageRequest, apiRequest } from "../api/client";
 import { deleteListing,
   fetchListingDetails,
@@ -440,9 +440,7 @@ export function ProfilePage({ theme, onThemeChange, language, onLanguageChange, 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col bg-[var(--nm-page)] px-4 pb-28 pt-0">
       <header className="-mx-4 flex min-h-[64px] items-center justify-between gap-3 bg-[var(--nm-header)] px-5 pb-1 pt-[max(6px,env(safe-area-inset-top))]">
-        <div>
-          <h1 className="text-xl font-bold leading-6 text-[var(--nm-text)]">{t("profile")}</h1>
-        </div>
+        <PageTitle icon="profile" title={t("profile")} />
         <AppearanceControls theme={theme} onThemeChange={onThemeChange} language={language} onLanguageChange={onLanguageChange} t={t} />
       </header>
       <SurfaceCard className="mt-4 flex items-center gap-3 p-3" aria-label={t("profile")}>

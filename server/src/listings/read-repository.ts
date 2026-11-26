@@ -37,8 +37,8 @@ export function createPrismaListingReadRepository(
     findAvailable: (query) => feedRepository.findAvailable(query),
 
     async findDetails(listingId): Promise<ListingDetailsRecord | null> {
-      return prisma.listing.findUnique({
-        where: { id: listingId },
+      return prisma.listing.findFirst({
+        where: { id: listingId, seller: { isBlocked: false } },
         select: {
           ...feedSelect,
           sellerId: true,
@@ -53,7 +53,7 @@ export function createPrismaListingReadRepository(
 
     async findImage(listingId, imageId) {
       const image = await prisma.listingImage.findFirst({
-        where: { id: imageId, listingId },
+        where: { id: imageId, listingId, listing: { seller: { isBlocked: false } } },
         select: {
           mimeType: true,
           imageBytes: true,
@@ -74,10 +74,12 @@ export function createPrismaListingReadRepository(
     },
 
     async findSeller(sellerId) {
-      return prisma.user.findUnique({
+      const seller = await prisma.user.findUnique({
         where: { id: sellerId },
-        select: { id: true, displayName: true, telegramUsername: true },
+        select: { id: true, displayName: true, telegramUsername: true, isBlocked: true },
       });
+      if (!seller || seller.isBlocked) return null;
+      return { id: seller.id, displayName: seller.displayName, telegramUsername: seller.telegramUsername };
     },
 
     async findSellerAvailable(sellerId, query) {

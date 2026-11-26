@@ -63,6 +63,7 @@ function makeApp(overrides: { admin?: boolean; notifySeller?: (telegramUserId: s
       displayName: "User",
       phoneNumber: null,
       isAdmin: userId === adminId && (overrides.admin ?? true),
+      isBlocked: false,
     })),
     updateProfile: vi.fn(),
   };

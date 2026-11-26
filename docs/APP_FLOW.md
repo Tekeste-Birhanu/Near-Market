@@ -1,27 +1,28 @@
-﻿# Application Flow
+# Application Flow
 
 ## 1. Purpose
 
 Describe how buyers, sellers, and admins move through Near Market. Product requirements are in `PRD.md`; visual guidance is in `DESIGN.md`.
 
-Admin journeys and screens below describe M3 (T20–T23). Admin provisioning, Dashboard, listing review/removal, and the admin bot launch are implemented; verification status is tracked in `TASKS.md`.
+Admin journeys and screens below describe M3 (T20–T26). Admin provisioning, Dashboard, listing review/removal, the admin bot launch, and user management are implemented. Database migration verification is tracked in `TASKS.md`.
 
 ## 2. Navigation map
 
 ```text
 Telegram bot
-  ├── Marketplace bot → Mini App
+  ├── Marketplace bot → Mini App (blocked users receive a suspension message instead)
   │   ├── Listings → Items (default) / House rentals → listing details → seller profile / contact seller
   │   ├── Post → choose Item or House rental → matching form → publish
   │   └── Profile → profile card + My listings (Items / Rentals) → gear → Settings → edit profile
   └── Admin bot → Admin Mini App
+      ├── Dashboard (default)
+      ├── Users → user list → ⋯ menu → Block / Unblock
       ├── Listings → Items / House rentals → listing details
       ├── Post → choose Item or House rental → matching form
-      ├── Profile → My listings / Settings
-      └── Dashboard (default)
+      └── Profile → My listings / Settings
 ```
 
-The marketplace Mini App opens on Listings with Items selected. The Admin Mini App has the same navigation plus Dashboard and opens on Dashboard. Keep the marketplace app's existing navigation and headers. Show Near Market branding on Listings in the marketplace app and on Dashboard in the Admin Mini App; the Admin Mini App's Listings, Post, and Profile pages use their own page titles. Every page places the same English/Amharic and Light/Dark toggles at the top right. The interface defaults to English and Dark mode; save both selections locally. The app does not follow Telegram's theme. Users can browse before setting up to post.
+The marketplace Mini App opens on Listings with Items selected. The Admin Mini App has the same navigation plus Dashboard and Users, and opens on Dashboard. Keep the marketplace app's existing navigation and headers. Show Near Market branding on Listings in the marketplace app and on Dashboard in the Admin Mini App; the Admin Mini App's Listings, Post, Profile, and Users pages use their own page titles. Every page places the same English/Amharic and Light/Dark toggles at the top right. The interface defaults to English and Dark mode; save both selections locally. The app does not follow Telegram's theme. Users can browse before setting up to post.
 
 ## 3. Main journeys
 
@@ -82,6 +83,20 @@ The marketplace Mini App opens on Listings with Items selected. The Admin Mini A
 - **Success outcome:** The listing is no longer available to buyers.
 - **Related requirements:** F-09
 
+### J-05 - Block or unblock a user
+
+- **Actor / role:** Admin
+- **Entry point:** Admin opens the Admin Mini App and navigates to the Users tab.
+- **Preconditions / access:** The user is authorized as an admin.
+- **Steps:**
+  1. The Users tab shows a compact, paginated list of all registered users, newest registered first.
+  2. The admin can search by display name or Telegram username (debounced as-you-type) and filter by All, Active, or Blocked.
+  3. The admin taps the ⋯ menu on a user row and selects Block or Unblock.
+  4. **Block:** A confirmation dialog explains the action will remove all the user's listings permanently. On confirm, the backend atomically sets `isBlocked = true` and deletes all of the user's listings and their images. No notification is sent to the user or to buyers of removed listings. The marketplace bot sends the user a suspension message in English and Amharic on their next `/start` or `/app` command. The user's listings are immediately hidden from public feeds and seller profiles.
+  5. **Unblock:** Sets `isBlocked = false`. Listings removed at block time are not restored. The user can open the Mini App again at their next session.
+- **Success outcome:** The user's access status is updated and reflected immediately in the Users list.
+- **Related requirements:** F-13
+
 ## 4. Screen and route inventory
 
 | Screen / route    | Purpose                                                                                        | Who can access it                                        | Related journeys |
@@ -96,6 +111,7 @@ The marketplace Mini App opens on Listings with Items selected. The Admin Mini A
 | House rental form | Create or edit a whole-house rental listing.                                                   | Authenticated seller; can edit only own listings.        | J-02, J-03       |
 | My listings       | Show and manage the seller's own listings, including sold/unavailable listings.                | Authenticated seller.                                    | J-03             |
 | Dashboard         | Show all registered users (buyers and sellers), total retained listings, item listings, house rentals, and retained item listing counts by category. | Authorized admin.                                        | J-04             |
+| Users             | Browse, search, and filter all registered users; block or unblock individual users.            | Authorized admin.                                        | J-05             |
 
 ## 5. Shared states and edge cases
 
@@ -104,7 +120,9 @@ The marketplace Mini App opens on Listings with Items selected. The Admin Mini A
 - **Error:** Show a clear error and allow retry. Preserve listing form details where feasible if submission fails.
 - **Unauthorized:** If a user without a Telegram username taps Post, block posting and explain the username requirement; keep browsing available.
 - **Unavailable listing:** If a sold or unavailable listing is reached from an old link, show an unavailable message.
-- **Destructive action:** Always confirm before permanently deleting a seller listing or removing a listing as an admin. Cancel leaves the listing unchanged.
+- **Destructive action:** Always confirm before permanently deleting a seller listing, removing a listing as an admin, or blocking a user. Cancel leaves the resource unchanged.
+- **Blocked user — bot:** When a blocked user sends `/start` or `/app` to the marketplace bot, they receive a suspension message in English and Amharic instead of the launch button.
+- **Blocked user — seller profile:** Visiting a blocked user's seller profile from an old link returns a not-found state to other users.
 - **Unsaved changes:** Confirm before discarding changes when leaving a listing form.
 - **Offline / interrupted:** Preserve entered listing details where feasible so the seller can retry.
 
@@ -113,7 +131,7 @@ The marketplace Mini App opens on Listings with Items selected. The Admin Mini A
 - Listings is the default marketplace page, with Items selected; users switch to House rentals within Listings using the tabs or horizontal swipes across listing content. Vertical scrolling remains available.
 - The Post navigation item asks the seller to choose Item or House rental, then opens the matching form.
 - Profile shows a profile summary card above My listings. My listings has Items and Rentals tabs, switchable by tapping or horizontal swiping from the tab row or listing content. The profile card gear opens a separate Settings view; Settings is not a tab. A visible My listings back control and the gear return to My listings.
-- The Admin Mini App has the same Listings, Post, and Profile navigation, plus Dashboard.
+- The Admin Mini App has the same Listings, Post, and Profile navigation, plus Dashboard and Users (Dashboard · Users · Listings · Post · Profile). Dashboard is the default page.
 - Browsing does not require seller setup. Posting requires a Telegram username.
 - Before the first listing form, show the prohibited-listings notice once per authenticated user on that device; no acknowledgment checkbox is required.
 - Returning from listing details restores the same listing type and browsing position.

@@ -31,6 +31,22 @@ describe("marketplace bot launch action", () => {
     }
     expect(reply).toHaveBeenCalledTimes(2);
   });
+
+  it("sends a suspension message instead of a launch button to blocked users", async () => {
+    const handlers = new Map<string, (ctx: Context) => unknown>();
+    const fakeBot = {
+      start: (handler: (ctx: Context) => unknown) => handlers.set("start", handler),
+      command: (command: string, handler: (ctx: Context) => unknown) => handlers.set(command, handler),
+    } as unknown as Telegraf;
+    const reply = vi.fn().mockResolvedValue(undefined);
+    const isBlocked = vi.fn(async (telegramUserId: string) => telegramUserId === "541234567");
+    registerMarketplaceLaunchCommands(fakeBot, "https://near-market-dev.example.org/", isBlocked);
+
+    await handlers.get("start")?.({ from: { id: 541234567 }, reply } as unknown as Context);
+    expect(isBlocked).toHaveBeenCalledWith("541234567");
+    expect(reply).toHaveBeenCalledWith(expect.stringContaining("Near Market has been suspended."));
+    expect(reply.mock.lastCall).toHaveLength(1);
+  });
 });
 
 describe("admin bot launch action", () => {

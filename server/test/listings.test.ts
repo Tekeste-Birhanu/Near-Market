@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.ts";
 import { issueAccessToken } from "../src/auth/session-token.ts";
 import { createPrismaListingFeedRepository } from "../src/listings/feed-repository.ts";
+import { makeActiveAuthUserRepository } from "./auth-user.ts";
 import type { ListingFeedQuery, ListingFeedRecord } from "../src/listings/feed-route.ts";
 import type { PrismaClient } from "../generated/prisma/client.ts";
 
@@ -34,7 +35,7 @@ function makeApp(records: ListingFeedRecord[]) {
   const findAvailable = vi.fn(async (_query: ListingFeedQuery) => records);
   const app = createApp(
     { rateLimitMax: 100, rateLimitWindowMs: 60_000 },
-    { auth: { sessionSecret }, listingFeedRepository: { findAvailable } },
+    { auth: { sessionSecret, userRepository: makeActiveAuthUserRepository() }, listingFeedRepository: { findAvailable } },
   );
   return { app, findAvailable };
 }
@@ -173,6 +174,7 @@ describe("Prisma listing feed query", () => {
       where: {
         listingType: "ITEM",
         availabilityStatus: "AVAILABLE",
+        seller: { isBlocked: false },
         itemCategory: "ELECTRONICS",
         itemCondition: "USED",
         priceAmount: { gte: "1000", lte: "20000.50" },

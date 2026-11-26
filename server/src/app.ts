@@ -10,6 +10,8 @@ import { requireSession } from "./auth/session-token.ts";
 import { createRateLimiter } from "./rate-limit.ts";
 import { createAdminRouter, type AdminDashboardRepository } from "./admin/dashboard-route.ts";
 import { createAdminListingsRouter, type AdminListingRepository } from "./admin/listings-route.ts";
+import { requireActiveUser } from "./auth/active-user.ts";
+import { createAdminUsersRouter, type AdminUserRepository } from "./admin/users-route.ts";
 
 export interface AppDependencies {
   auth?: AuthSessionDependencies;
@@ -19,6 +21,7 @@ export interface AppDependencies {
   listingLifecycleRepository?: ListingLifecycleRepository;
   adminDashboardRepository?: AdminDashboardRepository;
   adminListingRepository?: AdminListingRepository;
+  adminUserRepository?: AdminUserRepository;
   notifyListingSeller?: (telegramUserId: string) => Promise<void>;
 }
 
@@ -32,6 +35,7 @@ export function createApp(
   app.use(createRateLimiter(config.rateLimitMax, config.rateLimitWindowMs));
   app.use("/api/v1/auth", createAuthRouter(dependencies.auth));
   app.use("/api/v1", requireSession(dependencies.auth?.sessionSecret, dependencies.auth?.now));
+  app.use("/api/v1", requireActiveUser(dependencies.auth?.userRepository));
   app.use("/api/v1", createProfileRouter(dependencies.auth?.userRepository));
   app.use("/api/v1", createListingFeedRouter(dependencies.listingFeedRepository));
   app.use("/api/v1", createListingReadRouter(dependencies.listingReadRepository));
@@ -42,6 +46,7 @@ export function createApp(
     dependencies.adminListingRepository,
     dependencies.notifyListingSeller,
   ));
+  app.use("/api/v1/admin/users", createAdminUsersRouter(dependencies.auth?.userRepository, dependencies.adminUserRepository));
   app.use("/api/v1/admin", createAdminRouter(dependencies.auth?.userRepository, dependencies.adminDashboardRepository));
 
   app.get("/health", (_req, res) => {

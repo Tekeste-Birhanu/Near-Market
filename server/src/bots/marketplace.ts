@@ -1,8 +1,10 @@
 import { Markup, Telegraf, type Context } from "telegraf";
 
-export function createMarketplaceBot(token: string, miniAppUrl: string): Telegraf {
+export type BlockedUserLookup = (telegramUserId: string) => Promise<boolean>;
+
+export function createMarketplaceBot(token: string, miniAppUrl: string, isBlocked?: BlockedUserLookup): Telegraf {
   const bot = new Telegraf(token);
-  registerMarketplaceLaunchCommands(bot, miniAppUrl);
+  registerMarketplaceLaunchCommands(bot, miniAppUrl, isBlocked);
   bot.catch(() => {
     console.error("Marketplace bot update failed.");
   });
@@ -10,12 +12,17 @@ export function createMarketplaceBot(token: string, miniAppUrl: string): Telegra
   return bot;
 }
 
-export function registerMarketplaceLaunchCommands(bot: Telegraf, miniAppUrl: string): void {
-  const launchApp = (ctx: Context) =>
-    ctx.reply(
+export function registerMarketplaceLaunchCommands(bot: Telegraf, miniAppUrl: string, isBlocked?: BlockedUserLookup): void {
+  const launchApp = async (ctx: Context) => {
+    const telegramUserId = ctx.from?.id;
+    if (isBlocked && telegramUserId !== undefined && await isBlocked(String(telegramUserId))) {
+      return ctx.reply("Your access to Near Market has been suspended. / ወደ ኒየር ማርኬት የሚያደርጉት መዳረሻ ታግዷል።");
+    }
+    return ctx.reply(
       "Welcome to Near Market. Browse items and house rentals, or post your own listing.",
       marketplaceLaunchKeyboard(miniAppUrl),
     );
+  };
 
   bot.start(launchApp);
   bot.command("app", launchApp);

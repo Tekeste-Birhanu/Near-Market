@@ -32,6 +32,7 @@ function signedInitData(
 
 function makeRepository(): AuthUserRepository & {
   upsertTelegramUser: ReturnType<typeof vi.fn>;
+  getUserById: ReturnType<typeof vi.fn>;
 } {
   let profile = {
     id: "dd7320bd-8c00-42da-9ee8-5fe6bcba7cf2",
@@ -39,6 +40,7 @@ function makeRepository(): AuthUserRepository & {
     displayName: "Seller Name",
     phoneNumber: null as string | null,
     isAdmin: false,
+    isBlocked: false,
   };
   return {
     upsertTelegramUser: vi.fn(async (telegramUser) => ({ ...profile, telegramUsername: telegramUser.telegramUsername, displayName: telegramUser.displayName })),
@@ -70,6 +72,21 @@ describe("seller profile endpoints", () => {
       isAdmin: false,
     });
     expect(repository.getUserById).toHaveBeenCalledWith(userId);
+  });
+
+  it("rejects a previously issued token when its account is blocked", async () => {
+    const repository = makeRepository();
+    repository.getUserById.mockResolvedValueOnce({
+      id: userId,
+      telegramUsername: "seller_name",
+      displayName: "Seller Name",
+      phoneNumber: null,
+      isAdmin: false,
+      isBlocked: true,
+    });
+    const response = await request(authApp(repository)).get("/api/v1/me").set("Authorization", `Bearer ${token}`);
+    expect(response.status).toBe(403);
+    expect(response.body.error.code).toBe("ACCOUNT_BLOCKED");
   });
 
   it("updates editable profile fields and returns the updated profile", async () => {
@@ -128,6 +145,22 @@ function authApp(userRepository: AuthUserRepository) {
 
 describe("Telegram Mini App session endpoint", () => {
   const user = { id: 541234567, first_name: "Seller", last_name: "Name", username: "seller_name" };
+
+  it("does not issue a session to a blocked user", async () => {
+    const repository = makeRepository();
+    repository.upsertTelegramUser.mockImplementationOnce(async (telegramUser) => ({
+      id: "dd7320bd-8c00-42da-9ee8-5fe6bcba7cf2",
+      telegramUsername: telegramUser.telegramUsername,
+      displayName: telegramUser.displayName,
+      phoneNumber: null,
+      isAdmin: false,
+      isBlocked: true,
+    }));
+    const response = await request(authApp(repository)).post("/api/v1/auth/session").send({ initData: signedInitData(user) });
+    expect(response.status).toBe(403);
+    expect(response.body.error.code).toBe("ACCOUNT_BLOCKED");
+    expect(response.body).not.toHaveProperty("accessToken");
+  });
 
   it("validates Telegram initData, upserts the user, and issues a bearer token", async () => {
     const repository = makeRepository();

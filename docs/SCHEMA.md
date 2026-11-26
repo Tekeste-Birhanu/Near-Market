@@ -22,12 +22,13 @@
 | `display_name` | TEXT | Yes | Marketplace profile name; initially populated from Telegram profile data and editable by the user. |
 | `phone_number` | TEXT | No | Optional seller contact number, returned only with listing details. |
 | `is_admin` | BOOLEAN | Yes | Defaults to `false`; changed only through trusted server-side administration. |
+| `is_blocked` | BOOLEAN | Yes | Defaults to `false`; set to `true` by an admin to revoke marketplace access. Blocked users cannot create a session or use any authenticated endpoint. |
 | `created_at` | TIMESTAMPTZ | Yes | Time the user was first registered. |
 | `updated_at` | TIMESTAMPTZ | Yes | Updated when stored profile data changes. |
 
-- **Entity constraints:** `telegram_user_id` is unique. No separate buyer and seller records are needed; any user may browse and post. A user may be an admin as well.
+- **Entity constraints:** `telegram_user_id` is unique. No separate buyer and seller records are needed; any user may browse and post. A user may be an admin as well. A blocked user cannot authenticate or access the marketplace; their listings are removed when they are blocked and are not restored on unblock.
 - **Sensitive data:** Telegram user ID and phone number. Never trust identity fields supplied separately by the client.
-- **Related requirements:** F-07, F-08, F-12.
+- **Related requirements:** F-07, F-08, F-12, F-13.
 
 ### Listing
 - **Purpose:** Represents one item listing or one whole-house rental listing.
@@ -99,6 +100,7 @@ PostgreSQL `CHECK` constraints enforce the type-specific listing rules and nonne
 - **INV-05 — Availability:** Items use Available/Sold; house rentals use Available/Unavailable.
 - **INV-06 — Photos:** Each listing has one to three validated images, stored in order. Listing creation or photo replacement and its image rows are handled transactionally.
 - **INV-07 — Admin totals:** Registered users are counted from `users`; total retained listings, item listings, house rentals, and item listing counts by category are calculated from `listings`. All listing totals include sold and unavailable records; category counts include item listings only and use descending count order with alphabetical tie order. Deleted or admin-removed listings are excluded. Item and rental counts sum to the total retained listing count.
+- **INV-08 — Block integrity:** Blocking a user is an atomic transaction: `is_blocked` is set to `true` and all of the user's listings and their images are deleted in the same operation. The admin's own account cannot be blocked. `is_blocked` can only be set by an admin through the trusted backend; it is never accepted from a Mini App request.
 
 Use PostgreSQL constraints for uniqueness, foreign keys, allowed values, and field relationships. Enforce authentication, ownership, admin permissions, and the minimum photo count in the trusted backend.
 
@@ -116,7 +118,7 @@ Search and price/category filters use the listing fields. Add specialized indexe
 ## 6. Access and data lifecycle
 
 - **Ownership / tenant boundaries:** Each listing belongs to one user. The backend scopes seller operations to that user's authenticated ID.
-- **Read / write permissions:** Public feeds and listing details expose available listings. Owners can read and manage their retained listings regardless of availability. Admin-only removal and dashboard queries require server-side admin authorization.
+- **Read / write permissions:** Public feeds and listing details expose available listings. Owners can read and manage their retained listings regardless of availability. Admin-only removal, user management, and dashboard queries require server-side admin authorization. Blocked users' listings are excluded from all public feeds and seller profile pages; the admin can still view registered users (including blocked ones) through the Users tab.
 - **Image access:** Public users can retrieve images for available listings. The listing owner and an authorized admin can retrieve images for retained listings regardless of availability, so they can manage or inspect those listings.
 - **Retention / deletion:** Listings remain until the seller deletes them or an admin removes them. Deleting a listing also deletes its image rows. No automatic expiry or audit history is required for v1.
 - **Privacy:** Keep phone numbers out of listing feeds; return them only with listing details. Protect Telegram identity and admin fields from client writes.
